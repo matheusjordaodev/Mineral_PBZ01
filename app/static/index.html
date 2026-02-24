@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PMASCC WebGIS</title>
+
+    <!-- Leaflet -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+
+    <!-- Ícones da web (Font Awesome CDN) -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+
+    <!-- CSS da aplicação -->
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- Cabeçalho com logos no padrão do PPT -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <!-- Logo principal do PMASCC (exportada do PPT) -->
+          <img
+            src="/static/img/logo_pmascc.png"
+            alt="PMASCC"
+            class="logo-img"
+          />
+          <div class="topbar-text">
+            <span class="title-line1">
+              PLANO MUNICIPAL DE AÇÃO DA SERRA DO MAR
+            </span>
+            <span class="title-line2">
+              Serviço Web de Mapas e Feições
+            </span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <!-- Logo da prefeitura/parceiro (exportada do PPT) -->
+          <img
+            src="/static/img/logo_prefeitura.png"
+            alt="Prefeitura"
+            class="partner-logo"
+          />
+          <!-- Se tiver outros parceiros, pode adicionar aqui
+          <img
+            src="/static/img/logo_parceiro1.png"
+            alt="Parceiro 1"
+            class="partner-logo"
+          />
+          -->
+        </div>
+      </header>
+
+      <!-- Barra de filtros -->
+      <section class="filters-bar">
+        <div class="filters-group">
+          <label for="campanha-select">Campanha:</label>
+          <select id="campanha-select">
+            <option value="todas">Todas</option>
+            <option value="2023-01">Campanha Jan/2023</option>
+            <option value="2023-06">Campanha Jun/2023</option>
+          </select>
+        </div>
+
+        <div class="filters-group">
+          <span>Camadas:</span>
+          <label>
+            <input
+              type="checkbox"
+              class="layer-toggle"
+              data-layer-id="busca_ativa"
+              checked
+            />
+            Busca Ativa
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              class="layer-toggle"
+              data-layer-id="videotransecto"
+            />
+            Videotransecto
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              class="layer-toggle"
+              data-layer-id="fotoquadrado"
+            />
+            Fotoquadrado
+          </label>
+        </div>
+
+        <div class="filters-group quick-actions">
+          <button class="quick-btn" id="btn-zoom-ilha">
+            Zoom Ilha das Couves
+          </button>
+          <button class="quick-btn" id="btn-zoom-full">
+            Extensão Total
+          </button>
+        </div>
+      </section>
+
+      <!-- Layout principal -->
+      <main class="main-layout">
+        <!-- Mapa -->
+        <div id="map" class="map-container"></div>
+
+        <!-- Menu GIS lateral com ícones da web (Font Awesome) -->
+        <aside class="gis-menu">
+          <button class="gis-btn" data-action="zoom-in" title="Zoom +">
+            <i class="fa-solid fa-magnifying-glass-plus"></i>
+          </button>
+          <button class="gis-btn" data-action="zoom-out" title="Zoom -">
+            <i class="fa-solid fa-magnifying-glass-minus"></i>
+          </button>
+          <button class="gis-btn" data-action="zoom-full" title="Zoom geral">
+            <i class="fa-solid fa-earth-americas"></i>
+          </button>
+          <button
+            class="gis-btn"
+            data-action="toggle-base"
+            title="Alternar mapa base"
+          >
+            <i class="fa-solid fa-layer-group"></i>
+          </button>
+          <button
+            class="gis-btn"
+            data-action="locate"
+            title="Centralizar na área de interesse"
+          >
+            <i class="fa-solid fa-crosshairs"></i>
+          </button>
+        </aside>
+
+        <!-- Painel lateral de informações -->
+        <section class="info-panel">
+          <h2>Dados do ponto / estação</h2>
+          <div id="attributes"></div>
+
+          <h3>Mídias da campanha</h3>
+          <div id="media-carousel" class="media-carousel"></div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Modal de Detalhes -->
+    <div id="details-modal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <button id="modal-close-btn" class="modal-close-btn">&times;</button>
+        
+        <div class="modal-header">
+          <h2 id="modal-title">Detalhes do Ponto</h2>
+        </div>
+
+        <div class="modal-body">
+          <!-- Últimas Atualizações -->
+          <section class="modal-section">
+            <h3>Últimas Atualizações</h3>
+            <div id="modal-updates" class="info-text">
+              <em>Carregando atualizações...</em>
+            </div>
+          </section>
+
+          <!-- Mídia (Imagem/Vídeo) -->
+          <section class="modal-section media-section">
+            <div class="media-container">
+              <h4>Imagem Recente</h4>
+              <img id="modal-image" src="" alt="Imagem do local" class="modal-media-item" />
+            </div>
+            <div class="media-container">
+              <h4>Vídeo Recente</h4>
+              <div id="modal-video-container">
+                <!-- Video tag will be inserted here or src updated -->
+                <iframe id="modal-video" width="100%" height="200" src="" frameborder="0" allowfullscreen></iframe>
+              </div>
+            </div>
+          </section>
+
+          <!-- Informações Detalhadas -->
+          <section class="modal-section">
+            <h3>Informações</h3>
+            <div id="modal-attributes" class="attributes-grid">
+              <!-- Filled via JS -->
+            </div>
+          </section>
+
+          <!-- Documentos e Links -->
+          <section class="modal-section">
+            <h3>Documentos e Links</h3>
+            <ul id="modal-links" class="links-list">
+              <!-- Filled via JS -->
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- JS da aplicação -->
+    <script src="/static/app.js"></script>
+  </body>
+</html>

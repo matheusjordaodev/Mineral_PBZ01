@@ -1,0 +1,2649 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8" />
+    <title>WebGIS - Ilhas Litoral SP</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #06141f, #0c2331, #12425a);
+        }
+
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            width: 360px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 24px 26px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(6px);
+            color: #e5f2f7;
+        }
+
+        .login-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .login-subtitle {
+            margin: 0 0 18px 0;
+            color: #c5d8e3;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .login-form label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: #d8ecf7;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(6, 20, 31, 0.4);
+            color: #e5f2f7;
+            outline: none;
+            margin-bottom: 12px;
+        }
+
+        .login-form input:focus {
+            border-color: #2ec1f1;
+            box-shadow: 0 0 0 2px rgba(46, 193, 241, 0.2);
+        }
+
+        .login-form button {
+            width: 100%;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #0b607b, #0f8bb3);
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.08s ease, box-shadow 0.12s ease;
+            margin-top: 4px;
+        }
+
+        .login-form button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+        }
+
+        .login-error {
+            min-height: 18px;
+            color: #ffc2c2;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .login-hint {
+            font-size: 12px;
+            color: #c5d8e3;
+            margin-top: 10px;
+        }
+
+        .login-project-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2ec1f1;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .login-project-full-name {
+            font-size: 14px;
+            color: #c5d8e3;
+            text-align: center;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .login-separator {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 0 0 20px 0;
+        }
+
+        .app {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            background: #0d1c2a;
+        }
+
+        .topbar {
+            background: #0b607b;
+            color: #fff;
+            padding: 10px 20px 6px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar-title {
+            font-size: 16px;
+            font-weight: bold;
+            padding-bottom: 4px;
+        }
+
+        .topbar-menu {
+            display: flex;
+            gap: 2px;
+            padding-bottom: 6px;
+        }
+
+        .topbar-menu button {
+            flex: 1;
+            border: 1px solid #084553;
+            background: #0b607b;
+            color: #fff;
+            padding: 6px 4px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .topbar-menu button:hover {
+            background: #0f7a99;
+        }
+
+        .topbar-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0 8px 0;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .user-status {
+            color: #d4ecf9;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            padding: 6px 10px;
+            border: 1px solid #084553;
+            border-radius: 6px;
+            background: #0f8bb3;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background: #12a1cf;
+        }
+
+        #map {
+            position: relative;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* Esconde o zoom padrao, usamos a barra lateral */
+        .leaflet-control-zoom {
+            display: none;
+        }
+
+        /* Esconde a atribuicao/legendas do Leaflet */
+        .leaflet-control-attribution {
+            display: none !important;
+        }
+
+        /* Barra vertical lateral tipo QGIS */
+        .gis-toolbar {
+            position: absolute;
+            top: 50px;
+            /* Moved down to make space for toggle */
+            right: 10px;
+            background: rgba(8, 18, 28, 0.92);
+            border-radius: 8px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.45);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 1000;
+            padding: 4px;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform-origin: top right;
+        }
+
+        .gis-toolbar.hidden {
+            opacity: 0;
+            transform: scale(0.9);
+            pointer-events: none;
+        }
+
+        .gis-btn {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: linear-gradient(135deg, #0b607b, #0f8bb3);
+            color: #fff;
+            padding: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            width: 48px;
+            /* Smaller width */
+            height: 44px;
+            /* Smaller height */
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            transition: transform 0.08s ease, box-shadow 0.12s ease, background 0.2s ease;
+        }
+
+        .gis-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
+            background: linear-gradient(135deg, #0f8bb3, #13a9cf);
+        }
+
+        .gis-btn .icon {
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .gis-btn .label {
+            font-size: 8px;
+            letter-spacing: 0.3px;
+            color: #e5f2f7;
+        }
+
+        .gis-toggle-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1001;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #0f8bb3;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: background 0.2s ease;
+        }
+
+        .gis-toggle-btn:hover {
+            background: #12a1cf;
+        }
+
+        .menu-gis-label {
+            position: absolute;
+            bottom: 10px;
+            right: 40px;
+            background: yellow;
+            padding: 6px 10px;
+            font-size: 13px;
+            border-radius: 3px;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+            z-index: 900;
+        }
+
+        /* Texto das ilhas */
+        .label-ilha {
+            color: #ffffff;
+            text-shadow: 0 0 3px #000;
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .label-estacao {
+            color: #ffffff;
+            text-shadow: 0 0 3px #000;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .leaflet-tooltip.label-ilha,
+        .leaflet-tooltip.label-estacao {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+        }
+
+        #map .leaflet-tooltip.label-ilha,
+        #map .leaflet-tooltip.label-estacao {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.12s ease;
+        }
+
+        #map.show-ilha-labels .leaflet-tooltip.label-ilha {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #map.show-estacao-labels .leaflet-tooltip.label-estacao {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .leaflet-tooltip.label-ilha:before,
+        .leaflet-tooltip.label-estacao:before {
+            display: none;
+        }
+
+        .status-legend {
+            position: absolute;
+            right: 12px;
+            bottom: 12px;
+            z-index: 1001;
+            background: rgba(8, 20, 36, 0.88);
+            color: #dff2ff;
+            border: 1px solid rgba(120, 180, 220, 0.55);
+            border-radius: 8px;
+            padding: 10px 12px;
+            min-width: 200px;
+            backdrop-filter: blur(2px);
+            font-size: 12px;
+        }
+
+        .status-legend-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .status-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 5px 0;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+        }
+
+        .ilha-picker-wrap {
+            display: grid;
+            gap: 10px;
+        }
+
+        .ilha-card {
+            border: 1px solid #d8e1e8;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #ffffff 0%, #f7fafc 100%);
+            padding: 10px 12px;
+        }
+
+        .ilha-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #123247;
+            font-weight: 700;
+        }
+
+        .ilha-meta {
+            font-size: 11px;
+            color: #5f7687;
+            font-weight: 600;
+        }
+
+        .picker-checkbox {
+            accent-color: #0f8bb3;
+            transform: scale(1.05);
+            cursor: pointer;
+        }
+
+        .espaco-card {
+            border: 1px solid #e6edf2;
+            border-radius: 8px;
+            background: #ffffff;
+            padding: 8px 10px;
+            margin-top: 8px;
+        }
+
+        .espaco-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #29475d;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .pontos-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-left: 22px;
+        }
+
+        .ponto-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid #d6e3ec;
+            color: #2a4b62;
+            background: #f6fbff;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .ilha-tools {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+
+        .ilha-tool-btn {
+            font-size: 10px;
+            border: 1px solid #c8d9e6;
+            border-radius: 999px;
+            padding: 3px 8px;
+            background: #f4faff;
+            color: #27506a;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .ilha-tool-btn:hover {
+            background: #e9f6ff;
+        }
+
+        .ilha-selection-summary {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+            padding: 7px 10px;
+            background: #edf7ff;
+            border: 1px solid #cfe4f4;
+            border-radius: 8px;
+            font-size: 11px;
+            color: #214b66;
+            font-weight: 700;
+        }
+
+        .ilha-master-detail {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 10px;
+            align-items: start;
+        }
+
+        .ilha-list {
+            display: grid;
+            gap: 6px;
+        }
+
+        .ilha-list-item {
+            border: 1px solid #d2e2ee;
+            border-radius: 8px;
+            background: #f8fcff;
+            color: #23445b;
+            padding: 7px 8px;
+            font-size: 12px;
+            text-align: left;
+            cursor: pointer;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ilha-list-item.active {
+            border-color: #0f8bb3;
+            background: #e9f6ff;
+        }
+
+        .ilha-detail-panel {
+            border: 1px solid #d8e6f0;
+            border-radius: 10px;
+            background: #fdfefe;
+            padding: 10px;
+            min-height: 120px;
+        }
+
+        /* Caixa da medicao */
+        .measure-box {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            z-index: 900;
+            display: none;
+        }
+
+        /* Modal Container */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            /* Slightly darker */
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 10px;
+        }
+
+        /* Modal Card */
+        .modal-card {
+            width: 900px;
+            /* Increased from 600px */
+            max-width: 95vw;
+            /* Use vw for better mobile adaptation */
+            max-height: 95vh;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            /* Light Theme */
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+            color: #333;
+            /* Dark Text */
+            overflow: hidden;
+            /* Contains scrollable body */
+            transition: width 0.3s ease;
+            /* Smooth transition if resized */
+        }
+
+        /* Header */
+        .modal-header {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            background: #f8f9fa;
+            flex-shrink: 0;
+        }
+
+        .modal-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: bold;
+            color: #000;
+            /* Explicit Black */
+        }
+
+        /* Scrollable Body */
+        .modal-body {
+            padding: 15px;
+            overflow-y: auto;
+            flex-grow: 1;
+            line-height: 1.5;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .mock-section {
+            margin-bottom: 12px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+
+        .mock-section h4 {
+            margin: 0 0 6px 0;
+            font-size: 14px;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .mock-list {
+            margin: 0;
+            padding-left: 18px;
+            color: #333;
+        }
+
+        .mock-filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .mock-filters label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: #555;
+        }
+
+        .mock-filters input,
+        .mock-filters select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background: #fff;
+            color: #333;
+            outline: none;
+        }
+
+        .mock-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .mock-thumb {
+            background: linear-gradient(135deg, #0b607b, #0f8bb3);
+            border-radius: 8px;
+            height: 90px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+        }
+
+        .mock-thumb span {
+            position: absolute;
+            left: 8px;
+            bottom: 8px;
+            font-size: 12px;
+            color: #e5f2f7;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            margin-right: 6px;
+            margin-bottom: 4px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .modal-footer button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #084553;
+            background: #0f8bb3;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .modal-footer button:hover {
+            background: #12a1cf;
+        }
+
+        .powered-by {
+            position: absolute;
+            bottom: 2px;
+            right: 5px;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.2);
+            z-index: 1000;
+            pointer-events: none;
+            font-style: italic;
+            font-family: sans-serif;
+        }
+
+        /* Tab styles for data management modal */
+        .data-tab {
+            flex: 1;
+            padding: 8px 4px;
+            border: none;
+            border-bottom: 2px solid transparent;
+            background: transparent;
+            color: #777;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .data-tab:hover {
+            color: #333;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .data-tab.active {
+            color: #0f8bb3;
+            border-bottom-color: #0f8bb3;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <div class="login-project-name">PMASCC</div>
+            <div class="login-project-full-name">Projeto de Monitoramento de Areas Susceptiveis a Colonizacao Por
+                Coral-sol</div>
+            <div class="login-separator"></div>
+            <form class="login-form" onsubmit="handleLogin(event)" method="POST" action="javascript:void(0);">
+                <label for="username">Usuario</label>
+                <input id="username" name="username" type="text" autocomplete="username" placeholder="admin" required />
+                <label for="password">Senha</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" placeholder="admin"
+                    required />
+                <button type="submit">Entrar</button>
+            </form>
+            <div id="loginError" class="login-error"></div>
+        </div>
+    </div>
+
+    <div id="appLoadingOverlay"
+        style="display:none; position:fixed; inset:0; background:rgba(6,18,28,0.88); z-index:5000; align-items:center; justify-content:center; flex-direction:column; color:#e6f4ff;">
+        <div
+            style="width:42px; height:42px; border:4px solid rgba(255,255,255,0.25); border-top-color:#2ec1f1; border-radius:50%; animation: spinLoader .8s linear infinite;">
+        </div>
+        <div style="margin-top:12px; font-size:13px; font-weight:600; letter-spacing:.3px;">Carregando dados...</div>
+    </div>
+
+    <div class="app" id="app" aria-hidden="true">
+        <div class="topbar">
+            <div class="topbar-title">
+                PMASCC - Projeto de Monitoramento de Areas Susceptiveis a Colonizacao Por Coral-sol
+            </div>
+            <div class="topbar-info">
+                <div id="userStatus" class="user-status"></div>
+                <button class="logout-btn" onclick="handleLogout()">Sair</button>
+            </div>
+            <div class="topbar-menu">
+                <button onclick="openMockModal('projeto')">Projeto</button>
+                <button onclick="openMockModal('documentos')">Documentos</button>
+                <button onclick="openMockModal('imagens')">Imagens</button>
+                <button onclick="openGerenciarDadosModal()">Gerenciar Dados</button>
+                <button onclick="openUserManagementModal()" id="btnGerenciarUsuarios" style="display:none;">Gerenciar
+                    Usuários</button>
+                <!-- NOTE: Painel de Cadastros removed as per new flow -->
+                <button onclick="openMockModal('campanha')">Filtro Campanha</button>
+                <button onclick="openMockModal('ilha')">Filtro Ilha</button>
+                <button onclick="openMockModal('metodo')">Filtro Metodo</button>
+            </div>
+        </div>
+
+        <div id="map">
+            <button class="gis-toggle-btn" onclick="toggleGisToolbar()" title="Mostrar/Esconder Menu">
+                ≡
+            </button>
+
+            <div class="gis-toolbar" id="gisToolbar">
+                <button class="gis-btn" title="Zoom in" onclick="zoomIn()">
+                    <span class="icon">+</span>
+                    <span class="label">Zoom</span>
+                </button>
+                <button class="gis-btn" title="Zoom out" onclick="zoomOut()">
+                    <span class="icon">−</span>
+                    <span class="label">Afastar</span>
+                </button>
+                <button class="gis-btn" title="Visao geral" onclick="resetView()">
+                    <span class="icon">⟳</span>
+                    <span class="label">Reset</span>
+                </button>
+                <button class="gis-btn" title="Ligar/Desligar Ilhas" onclick="toggleIlhas()">
+                    <span class="icon">⛰</span>
+                    <span class="label">Ilhas</span>
+                </button>
+                <button class="gis-btn" title="Medir distancia" onclick="toggleMeasureMode()">
+                    <span class="icon">⟷</span>
+                    <span class="label">Medir</span>
+                </button>
+                <button class="gis-btn" title="Identificar ilha" onclick="toggleIdentifyMode()">
+                    <span class="icon">?</span>
+                    <span class="label">Info</span>
+                </button>
+                <button class="gis-btn" title="Limpar medicoes" onclick="clearMeasurements()">
+                    <span class="icon">✖</span>
+                    <span class="label">Limpar</span>
+                </button>
+            </div>
+
+            <div class="measure-box" id="measureBox">Medida: 0 m</div>
+            <div class="status-legend" id="statusLegend">
+                <div class="status-legend-title">Legenda de Atualizacao</div>
+                <div class="status-legend-item"><span class="status-dot" style="background:#1fbf5b;"></span>Campanha ate 1 mes</div>
+                <div class="status-legend-item"><span class="status-dot" style="background:#f0c330;"></span>Campanha ate 3 meses</div>
+                <div class="status-legend-item"><span class="status-dot" style="background:#e04b4b;"></span>Acima de 3 meses ou sem campanha</div>
+            </div>
+            <div class="powered-by">Powered by BluebellIndex</div>
+        </div>
+    </div>
+
+    <!-- INCLUDE COMPONENTS -->
+    {% include "components/modals.html" %}
+    {% include "components/data_modal.html" %}
+    {% include "components/user_management_modal.html" %}
+    {% include "components/registration_modal.html" %}
+    {% include "components/campaign_details_modal.html" %}
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const appLoadingOverlay = document.getElementById('appLoadingOverlay');
+
+        function setAppLoading(loading) {
+            if (!appLoadingOverlay) return;
+            appLoadingOverlay.style.display = loading ? 'flex' : 'none';
+        }
+
+        const loaderStyle = document.createElement('style');
+        loaderStyle.textContent = '@keyframes spinLoader { to { transform: rotate(360deg); } }';
+        document.head.appendChild(loaderStyle);
+
+        // Auth State
+        var authToken = localStorage.getItem('authToken');
+        var currentUser = localStorage.getItem('currentUser');
+        if (authToken && currentUser) {
+            // Simple restore session
+        } else {
+            currentUser = null;
+        }
+
+        var mapStarted = false;
+        var map;
+        var layerIlhas;
+        var layerEspacos;
+        var ilhaMarkers = [];
+        var ilhasVisiveis = true;
+        var measureMode = false;
+        var measurePoints = [];
+        var measureLine = null;
+        var measureBox;
+        var identifyMode = false;
+        var modalOverlay = document.getElementById('mockModal');
+        var modalTitleEl = document.getElementById('modalTitle');
+        var modalBodyEl = document.getElementById('modalBody');
+        var mockContent = {
+            'projeto': { title: 'Sobre o Projeto', html: '<p>O PMASCC visa monitorar a incidência do Coral-sol nas ilhas do litoral de SP.</p><p>Metodologia baseada em transectos de vídeo e foto-quadrados.</p>' },
+            'documentos': { title: 'Documentos', html: '<div id="docsList"><div style="color:#c5d8e3;">Carregando...</div></div>' },
+            'imagens': { title: 'Galeria de Imagens', html: '<div id="galeriaLoading" style="color:#c5d8e3;">Carregando imagens...</div><div id="galeriaContainer" style="display:none; max-height:400px; overflow-y:auto; padding-right:5px;"></div>' },
+            'campanha': { title: 'Filtro por Campanha', html: '<div class="mock-filters"><label>Campanha</label><select id="filterCampanhaSelect"><option value="">Carregando...</option></select></div><div style="margin-top:10px;"><button onclick="applyCampanhaFilter()" style="padding:6px 12px; background:#0f8bb3; color:#fff; border:none; border-radius:4px; cursor:pointer;">Filtrar</button></div>' },
+            'ilha': { title: 'Filtro por Ilha', html: '<div class="mock-filters"><label>Ilha</label><select><option>Ilha Vitória</option><option>Ilha Anchieta</option></select></div><div style="margin-top:10px;"><button style="padding:6px 12px; background:#0f8bb3; color:#fff; border:none; border-radius:4px;">Filtrar</button></div>' },
+            'metodo': { title: 'Filtro por Método', html: '<div class="mock-filters"><label>Método</label><select><option>Vídeo Transecto</option><option>Foto Quadrado</option><option>Busca Ativa</option></select></div><div style="margin-top:10px;"><button style="padding:6px 12px; background:#0f8bb3; color:#fff; border:none; border-radius:4px;">Filtrar</button></div>' }
+        };
+
+        // Gallery State
+        var currentMediaList = [];
+        var currentMediaIndex = 0;
+
+        var ilhas = []; // Will be fetched from API
+
+        function getStatusColor(corStatus) {
+            if (corStatus === 'green') return '#1fbf5b';
+            if (corStatus === 'yellow') return '#f0c330';
+            return '#e04b4b';
+        }
+
+        const ILHA_DISPLAY_ORDER = [
+            'Ilha das Couves',
+            'Ilha Anchieta',
+            'Ilha Vitória',
+            'Ilha de Búzios',
+            'Ilha Montão de Trigo',
+            'Ilha da Queimada Grande',
+            'Laje da Conceição',
+            'Laje de Santos',
+            'Ilha do Mar Virado',
+            'Ilha da Moela',
+            'Praia de Castelhanos',
+            'Ilha do Guaraú',
+            'Ilha das Cabras'
+        ];
+
+        function normalizeTextForSort(text) {
+            return String(text || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .trim();
+        }
+
+        function extractPointNumberFromCode(code) {
+            const m = String(code || '').match(/(\d+)\s*$/);
+            if (!m) return 1;
+            const n = parseInt(m[1], 10);
+            if (!Number.isFinite(n) || n < 1 || n > 8) return 1;
+            return n;
+        }
+
+        function sortEspacosByCodigo(espacos) {
+            return [...(espacos || [])].sort((a, b) => {
+                const aCod = String(a?.codigo || '');
+                const bCod = String(b?.codigo || '');
+                const aNumMatch = aCod.match(/(\d+)\s*$/);
+                const bNumMatch = bCod.match(/(\d+)\s*$/);
+                const aNum = aNumMatch ? parseInt(aNumMatch[1], 10) : Number.MAX_SAFE_INTEGER;
+                const bNum = bNumMatch ? parseInt(bNumMatch[1], 10) : Number.MAX_SAFE_INTEGER;
+                if (aNum !== bNum) return aNum - bNum;
+                return aCod.localeCompare(bCod, 'pt-BR');
+            });
+        }
+
+        function sortIlhasByDefinedOrder(rawIlhas) {
+            const orderMap = new Map(
+                ILHA_DISPLAY_ORDER.map((name, index) => [normalizeTextForSort(name), index])
+            );
+
+            return [...(rawIlhas || [])]
+                .map(ilha => ({
+                    ...ilha,
+                    espacos_amostrais: sortEspacosByCodigo(ilha.espacos_amostrais || [])
+                }))
+                .sort((a, b) => {
+                    const aName = normalizeTextForSort(a?.nome);
+                    const bName = normalizeTextForSort(b?.nome);
+                    const aIdx = orderMap.has(aName) ? orderMap.get(aName) : Number.MAX_SAFE_INTEGER;
+                    const bIdx = orderMap.has(bName) ? orderMap.get(bName) : Number.MAX_SAFE_INTEGER;
+                    if (aIdx !== bIdx) return aIdx - bIdx;
+                    return String(a?.nome || '').localeCompare(String(b?.nome || ''), 'pt-BR');
+                });
+        }
+
+        function formatDateBR(dateIso) {
+            if (!dateIso) return '-';
+            const d = new Date(dateIso);
+            if (Number.isNaN(d.getTime())) return dateIso;
+            return d.toLocaleDateString('pt-BR');
+        }
+
+        function updateMapLabelVisibility() {
+            if (!map) return;
+            const mapEl = document.getElementById('map');
+            if (!mapEl) return;
+            const zoom = map.getZoom();
+            mapEl.classList.toggle('show-ilha-labels', zoom >= 10);
+            mapEl.classList.toggle('show-estacao-labels', zoom >= 13);
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            var user = document.getElementById('username').value.trim();
+            var pass = document.getElementById('password').value.trim();
+            var errorEl = document.getElementById('loginError');
+            var btn = event.target.querySelector('button');
+
+            btn.disabled = true;
+            btn.textContent = "Verificando...";
+
+            try {
+                const formData = new URLSearchParams();
+                formData.append('username', user);
+                formData.append('password', pass);
+
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    currentUser = user;
+
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', currentUser);
+
+                    errorEl.textContent = "";
+                    document.getElementById('loginScreen').style.display = 'none';
+                    var appEl = document.getElementById('app');
+                    appEl.style.display = 'flex';
+                    appEl.removeAttribute('aria-hidden');
+                    setAppLoading(true);
+                    updateUserStatus();
+                    await initMap();
+                    setAppLoading(false);
+                } else {
+                    errorEl.textContent = "Credenciais inválidas.";
+                }
+            } catch (e) {
+                setAppLoading(false);
+                errorEl.textContent = "Erro de conexão: " + e.message;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Entrar";
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            authToken = null;
+            currentUser = null;
+            location.reload();
+        }
+
+        function updateUserStatus() {
+            if (currentUser) {
+                document.getElementById('userStatus').textContent = "Olá, " + currentUser;
+
+                // Show Admin tab if admin
+                if (currentUser === 'admin') {
+                    const btn = document.getElementById('btnGerenciarUsuarios');
+                    if (btn) btn.style.display = 'block';
+                }
+            }
+        }
+
+        // Modal Generic
+        function openMockModal(key) {
+            if (!currentUser) return;
+            var content = mockContent[key];
+            if (!content) return;
+            modalTitleEl.textContent = content.title;
+            modalBodyEl.innerHTML = content.html;
+            modalOverlay.style.display = 'flex';
+            modalOverlay.setAttribute('aria-hidden', 'false');
+
+            // Special init for Campanha Filter
+            if (key === 'campanha') {
+                loadFilterCampanhas();
+            } else if (key === 'imagens') {
+                loadGaleriaImagens();
+            } else if (key === 'documentos') {
+                loadDocumentos();
+            }
+        }
+
+        function closeMockModal() {
+            modalOverlay.style.display = 'none';
+            modalOverlay.setAttribute('aria-hidden', 'true');
+        }
+
+        // --- Documentos Logic ---
+        async function loadDocumentos() {
+            const container = document.getElementById('docsList');
+            if (!container) return;
+
+            container.innerHTML = '<div style="color:#c5d8e3;">Carregando documentos...</div>';
+
+            try {
+                const response = await fetch('/api/documentos');
+                if (response.ok) {
+                    const docs = await response.json();
+                    if (docs.length === 0) {
+                        container.innerHTML = '<div style="color:#999; font-style:italic;">Nenhum documento encontrado.</div>';
+                        return;
+                    }
+
+                    let html = '<ul class="mock-list">';
+                    docs.forEach(doc => {
+                        html += `<li style="margin-bottom: 8px;">
+                            <a href="${doc.url}" target="_blank" style="color: #2ec1f1; text-decoration: none; font-weight: bold;">
+                                <span style="margin-right:5px;">📄</span> ${doc.titulo}
+                            </a>
+                            <div style="font-size: 11px; color: #777; margin-left: 24px;">
+                                ${doc.tipo ? `<span class="pill" style="margin-right:5px;">${doc.tipo}</span>` : ''}
+                                <span>${doc.data ? new Date(doc.data).toLocaleDateString() : ''}</span>
+                                ${doc.campanha ? ` - Campanha: ${doc.campanha}` : ''}
+                            </div>
+                        </li>`;
+                    });
+                    html += '</ul>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<div style="color:#ffc2c2;">Erro ao carregar documentos.</div>';
+                }
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<div style="color:#ffc2c2;">Erro de conexão.</div>';
+            }
+        }
+
+        // Campanha Filter Logic
+        let allCampanhasCache = [];
+
+        async function loadFilterCampanhas() {
+            const select = document.getElementById('filterCampanhaSelect');
+            if (!select) return;
+
+            select.innerHTML = '<option value="">Carregando...</option>';
+
+            try {
+                const response = await fetch('/api/all-campanhas');
+                if (response.ok) {
+                    const data = await response.json();
+                    allCampanhasCache = data.campanhas;
+
+                    select.innerHTML = '<option value="">-- Selecione --</option>';
+                    if (allCampanhasCache.length === 0) {
+                        select.innerHTML += '<option value="" disabled>Nenhuma campanha encontrada</option>';
+                    } else {
+                        allCampanhasCache.forEach(c => {
+                            const opt = document.createElement('option');
+                            opt.value = c.id;
+                            opt.textContent = `${c.nome} (${c.data}) - ${c.ilha_nome}`;
+                            select.appendChild(opt);
+                        });
+                    }
+                } else {
+                    select.innerHTML = '<option value="">Erro ao carregar</option>';
+                }
+            } catch (e) {
+                console.error(e);
+                select.innerHTML = '<option value="">Erro de conexão</option>';
+            }
+        }
+
+        function applyCampanhaFilter() {
+            const select = document.getElementById('filterCampanhaSelect');
+            const campanhaId = parseInt(select.value); // Ensure int
+
+            if (!campanhaId) {
+                alert("Selecione uma campanha");
+                return;
+            }
+
+            // Find details in cache or just pass what we have
+            const campanha = allCampanhasCache.find(c => c.id === campanhaId);
+
+            if (campanha) {
+                // Open Details Modal
+                openCampaignDetails(campanha.id, campanha.ilha_id, campanha.nome);
+                // Close the filter modal
+                closeMockModal();
+            }
+        }
+
+        // Detail Modal
+        var detailModal = document.getElementById('detailModal');
+        function openDetailModal(props) {
+            document.getElementById('detailTitle').textContent = props.nome || "Detalhes";
+
+            // Populate mock data
+            document.getElementById('detailUpdates').innerHTML = "Última vistoria: 12/01/2025<br>Status: Monitorado";
+
+            // Mock Images
+            document.getElementById('detailImage').src = "https://via.placeholder.com/400x200?text=Ilha+" + encodeURIComponent(props.nome);
+
+            // Mock Info
+            const infoHtml = `
+            <div><strong>Área:</strong> 42ha</div>
+            <div><strong>Profundidade Média:</strong> 8m</div>
+            <div><strong>Temperatura:</strong> 24°C</div>
+            <div><strong>Coral-sol:</strong> <span style='color:${props.tem_coralsol ? "#ff5555" : "#55ff55"}'>${props.tem_coralsol ? "DETECTADO" : "NÃO DETECTADO"}</span></div>
+        `;
+            document.getElementById('detailInfo').innerHTML = infoHtml;
+
+            // Mock Campaigns
+            let campsHtml = "<li><span class='pill'>Jan 2025</span> Vistoria Completa</li><li><span class='pill'>Out 2024</span> Monitoramento Rápido</li>";
+            document.getElementById('detailCampaigns').innerHTML = campsHtml;
+
+            detailModal.style.display = 'flex';
+            detailModal.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeDetailModal() {
+            detailModal.style.display = 'none';
+            detailModal.setAttribute('aria-hidden', 'true');
+        }
+
+        // Station Modal
+        var stationModal = document.getElementById('stationModal');
+        async function openStationModal(stationId, stationName) {
+            const title = stationName ? stationName : ("Estacao " + stationId);
+            document.getElementById('stationTitle').textContent = title;
+
+            const tbody = document.getElementById('stationTableBody');
+            const caption = document.getElementById('stationImageCaption');
+            tbody.innerHTML = '<tr><td style="padding:8px;">Carregando dados...</td></tr>';
+            caption.textContent = 'Carregando imagens...';
+            currentMediaList = [];
+            currentMediaIndex = 0;
+            updateStationImage();
+
+            stationModal.style.display = 'flex';
+            stationModal.setAttribute('aria-hidden', 'false');
+
+            try {
+                const token = localStorage.getItem('authToken');
+                const res = await fetch(`/api/estacoes/${stationId}/ultima-campanha`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Falha ao carregar estacao');
+
+                if (!data.found) {
+                    tbody.innerHTML = `
+                        <tr><td style="padding:8px; color:#666;">Nenhum dado registrado</td></tr>
+                        <tr><td style="padding:8px; color:#777;">Esta estacao ainda nao foi amostrada em nenhuma campanha.</td></tr>
+                    `;
+                    currentMediaList = [];
+                    currentMediaIndex = 0;
+                    updateStationImage();
+                    caption.textContent = 'Sem imagens para esta estacao';
+                    return;
+                }
+
+                const cor = getStatusColor(data.cor_status);
+                const camp = data.campanha || {};
+                const dados = data.dados || {};
+                const estacao = data.estacao || {};
+                const diasTxt = data.dias_desde_campanha == null ? '-' : (data.dias_desde_campanha + ' dia(s)');
+
+                tbody.innerHTML = `
+                    <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Campanha</strong></td><td style="padding:8px;">${camp.nome || '-'}</td></tr>
+                    <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Data campanha</strong></td><td style="padding:8px;">${formatDateBR(camp.data)}</td></tr>
+                    <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Atualizacao</strong></td><td style="padding:8px;"><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${cor}; margin-right:6px;"></span>${diasTxt}</td></tr>
+                    <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Data coleta</strong></td><td style="padding:8px;">${formatDateBR(dados.data)}</td></tr>
+                    <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Observacoes</strong></td><td style="padding:8px;">${dados.observacoes || '-'}</td></tr>
+                    <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Fotos</strong></td><td style="padding:8px;">${dados.num_fotoquadrados ?? 0}</td></tr>
+                    <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Buscas ativas</strong></td><td style="padding:8px;">${dados.num_buscas_ativas ?? 0}</td></tr>
+                    <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Video transectos</strong></td><td style="padding:8px;">${dados.num_video_transectos ?? 0}</td></tr>
+                    <tr><td style="padding:8px;"><strong>Coordenadas</strong></td><td style="padding:8px;">${estacao.latitude ?? '-'}, ${estacao.longitude ?? '-'}</td></tr>
+                `;
+
+                currentMediaList = Array.isArray(data.media) ? data.media : [];
+                currentMediaIndex = 0;
+                updateStationImage();
+                return;
+            } catch (e) {
+                tbody.innerHTML = `<tr><td style="padding:8px; color:#b00020;">Erro ao carregar dados: ${e.message}</td></tr>`;
+                currentMediaList = [];
+                currentMediaIndex = 0;
+                updateStationImage();
+                return;
+            }
+        }
+
+        function closeStationModal() {
+            stationModal.style.display = 'none';
+            stationModal.setAttribute('aria-hidden', 'true');
+        }
+
+        function updateStationImage() {
+            const imgEl = document.getElementById('stationImage');
+            const caption = document.getElementById('stationImageCaption');
+            if (!currentMediaList || currentMediaList.length === 0) {
+                imgEl.removeAttribute('src');
+                imgEl.style.display = 'none';
+                if (caption) caption.textContent = 'Sem imagens para esta estacao';
+                return;
+            }
+            imgEl.style.display = 'block';
+            imgEl.src = currentMediaList[currentMediaIndex];
+            if (caption) caption.textContent = `Imagem ${currentMediaIndex + 1} de ${currentMediaList.length}`;
+        }
+        function nextImage() {
+            if (!currentMediaList || currentMediaList.length === 0) return;
+            currentMediaIndex = (currentMediaIndex + 1) % currentMediaList.length;
+            updateStationImage();
+        }
+        function prevImage() {
+            if (!currentMediaList || currentMediaList.length === 0) return;
+            currentMediaIndex = (currentMediaIndex - 1 + currentMediaList.length) % currentMediaList.length;
+            updateStationImage();
+        }
+
+        // Lightbox
+        function openLightbox(url, caption) {
+            document.getElementById('lightboxContent').innerHTML = `<img src="${url}" style="max-width:100%; max-height:80vh; border-radius:4px;">`;
+            document.getElementById('lightboxCaption').textContent = caption || "";
+            document.getElementById('lightbox').style.display = "flex";
+        }
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = "none";
+        }
+
+        function bindOverlayClose(modalId, closeFnName) {
+            const overlay = document.getElementById(modalId);
+            if (!overlay || overlay.dataset.overlayCloseBound === '1') return;
+            overlay.dataset.overlayCloseBound = '1';
+            overlay.addEventListener('click', function (e) {
+                if (e.target !== overlay) return;
+                const fn = window[closeFnName];
+                if (typeof fn === 'function') fn();
+            });
+        }
+
+        function setupOverlayCloseHandlers() {
+            bindOverlayClose('mockModal', 'closeMockModal');
+            bindOverlayClose('detailModal', 'closeDetailModal');
+            bindOverlayClose('stationModal', 'closeStationModal');
+            bindOverlayClose('gerenciarDadosModal', 'closeGerenciarDadosModal');
+            bindOverlayClose('campaignDetailsModal', 'closeCampaignDetailsModal');
+            bindOverlayClose('registrationModal', 'closeRegistrationModal');
+            bindOverlayClose('userManagementModal', 'closeUserManagementModal');
+            bindOverlayClose('coralSolModal', 'closeCoralSolModal');
+        }
+
+        setupOverlayCloseHandlers();
+
+        // Data Management Modal
+        var dataModal = document.getElementById('gerenciarDadosModal');
+        function openGerenciarDadosModal() {
+            if (!currentUser) return;
+            dataModal.style.display = 'flex';
+            dataModal.setAttribute('aria-hidden', 'false');
+            if (ilhas.length === 0) fetchIlhas().catch(() => { }); // Load if empty
+            switchDataTab('ilha'); // Reset to first tab
+        }
+        function closeGerenciarDadosModal() {
+            dataModal.style.display = 'none';
+            dataModal.setAttribute('aria-hidden', 'true');
+        }
+
+        function switchDataTab(tabName) {
+            // Hide all content
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(el => el.style.display = 'none');
+
+            // Deactivate all tabs
+            const tabs = document.querySelectorAll('.data-tab');
+            tabs.forEach(el => el.classList.remove('active'));
+
+            // Activate selected
+            document.getElementById('content' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).style.display = 'block';
+            document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
+
+            // Specific loaders
+            if (tabName === 'campanha') {
+                loadBases();
+                loadEmbarcacoes();
+                loadEquipe();
+                loadIlhasSelectionForCampaign();
+            } else if (tabName === 'usuarios') {
+                loadUsers();
+            } else if (tabName === 'lista') {
+                loadCampanhasList();
+            } else if (tabName === 'questionario') {
+                loadCampanhasForQuestionario();
+            }
+        }
+
+        // MAP LOGIC
+        async function initMap() {
+            if (mapStarted) {
+                setTimeout(() => map.invalidateSize(), 100);
+                return;
+            }
+
+            map = L.map('map', {
+                zoomControl: false,
+                attributionControl: false
+            }).setView([-23.8, -45.4], 10);
+
+            // Google Satellite Basemap (No Labels)
+            L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+            }).addTo(map);
+
+            mapStarted = true;
+
+            // Initial Load
+            await fetchIlhas();
+            updateMapLabelVisibility();
+
+            // Events
+            map.on('click', function (e) {
+                if (measureMode) {
+                    addMeasurePoint(e.latlng);
+                } else if (identifyMode) {
+                    // Click handling for identify is usually on markers, but map click can reset
+                }
+            });
+            map.on('zoomend', updateMapLabelVisibility);
+        }
+
+        function zoomIn() { map.zoomIn(); }
+        function zoomOut() { map.zoomOut(); }
+        function resetView() { map.setView([-23.8, -45.4], 10); }
+
+        function toggleGisToolbar() {
+            const tb = document.getElementById('gisToolbar');
+            tb.classList.toggle('hidden');
+        }
+
+        async function fetchIlhas() {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/ilhas', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!response.ok) throw new Error("Falha ao carregar ilhas");
+                const data = await response.json();
+                ilhas = sortIlhasByDefinedOrder(data.ilhas || data);
+
+                // Populate Select
+                const select = document.getElementById('ilhaSelect');
+                select.innerHTML = '<option value="">-- Selecione uma ilha --</option>';
+                ilhas.forEach(ilha => {
+                    const opt = document.createElement('option');
+                    opt.value = ilha.id;
+                    opt.textContent = ilha.nome;
+                    select.appendChild(opt);
+                });
+
+                // Check if user has admin access? (Assuming yes for simplicity of this demo)
+
+                renderIlhasOnMap();
+                loadIlhasSelectionForCampaign();
+                return true;
+
+            } catch (e) {
+                console.error(e);
+                throw e;
+            }
+        }
+
+        function renderIlhasOnMap() {
+            // Clear existing
+            if (layerIlhas) layerIlhas.clearLayers();
+            if (layerEspacos) layerEspacos.clearLayers();
+            ilhaMarkers = [];
+
+            layerIlhas = L.layerGroup().addTo(map);
+            layerEspacos = L.layerGroup().addTo(map);
+
+            ilhas.forEach(ilha => {
+                let layer;
+                if (ilha.geojson) {
+                    const geo = JSON.parse(ilha.geojson);
+                    layer = L.geoJSON(geo, {
+                        style: { color: '#ffcc00', weight: 2, fillOpacity: 0.1 }
+                    });
+                } else if (ilha.coords) {
+                    // coords is [lat, lon]
+                    layer = L.circleMarker(ilha.coords, {
+                        color: '#36b4da',
+                        fillColor: '#36b4da',
+                        radius: 5,
+                        weight: 1.5,
+                        fillOpacity: 0.45
+                    });
+                }
+
+                if (layer) {
+                    layer.bindTooltip(ilha.nome, { permanent: true, direction: 'top', className: 'label-ilha' });
+                    layer.on('click', () => {
+                        // Auto-select island in tab 1
+                        document.getElementById('ilhaSelect').value = ilha.id;
+                        onIlhaSelected();
+                        openGerenciarDadosModal();
+                    });
+                    layer.addTo(layerIlhas);
+                }
+
+                (ilha.espacos_amostrais || []).forEach(espaco => {
+                    const lat = parseFloat(espaco.latitude);
+                    const lon = parseFloat(espaco.longitude);
+                    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+                    const cor = getStatusColor(espaco.cor_status);
+                    const marker = L.circleMarker([lat, lon], {
+                        color: cor,
+                        fillColor: cor,
+                        radius: 8,
+                        weight: 2,
+                        fillOpacity: 0.9
+                    });
+
+                    const nomePonto = espaco.codigo || espaco.nome || `Estacao ${espaco.id}`;
+                    marker.bindTooltip(nomePonto, { permanent: true, direction: 'top', className: 'label-estacao' });
+
+                    const camp = espaco.latest_campaign;
+                    const campTxt = camp ? `${camp.nome || 'Campanha'} (${formatDateBR(camp.data)})` : 'Nenhuma campanha';
+                    marker.bindPopup(`
+                        <div style="font-size:12px; line-height:1.4;">
+                            <div><strong>${nomePonto}</strong></div>
+                            <div>Ilha: ${ilha.nome}</div>
+                            <div>Ultima campanha: ${campTxt}</div>
+                        </div>
+                    `);
+
+                    marker.on('click', () => openStationModal(espaco.id, nomePonto));
+                    marker.addTo(layerEspacos);
+                });
+            });
+        }
+
+        function toggleIlhas() {
+            ilhasVisiveis = !ilhasVisiveis;
+            if (ilhasVisiveis) {
+                if (layerIlhas) map.addLayer(layerIlhas);
+                if (layerEspacos) map.addLayer(layerEspacos);
+            } else {
+                if (layerIlhas) map.removeLayer(layerIlhas);
+                if (layerEspacos) map.removeLayer(layerEspacos);
+            }
+        }
+
+        // Measurement Tool
+        function toggleMeasureMode() {
+            measureMode = !measureMode;
+            if (measureMode) {
+                document.body.style.cursor = 'crosshair';
+                measurePoints = [];
+                document.getElementById('measureBox').style.display = 'block';
+                document.getElementById('measureBox').textContent = "Clique para medir...";
+            } else {
+                document.body.style.cursor = 'default';
+                if (measureLine) map.removeLayer(measureLine);
+                document.getElementById('measureBox').style.display = 'none';
+            }
+        }
+
+        function addMeasurePoint(latlng) {
+            measurePoints.push(latlng);
+            if (measurePoints.length > 1) {
+                let totalDist = 0;
+                for (let i = 0; i < measurePoints.length - 1; i++) {
+                    totalDist += measurePoints[i].distanceTo(measurePoints[i + 1]);
+                }
+                document.getElementById('measureBox').textContent = "Distância: " + totalDist.toFixed(1) + " m";
+
+                if (measureLine) map.removeLayer(measureLine);
+                measureLine = L.polyline(measurePoints, { color: 'red' }).addTo(map);
+            }
+        }
+
+        function clearMeasurements() {
+            measurePoints = [];
+            if (measureLine) map.removeLayer(measureLine);
+            document.getElementById('measureBox').textContent = "Medida: 0 m";
+        }
+
+        function toggleIdentifyMode() {
+            identifyMode = !identifyMode;
+            alert(identifyMode ? "Modo Identificar ATIVADO. Clique nas ilhas." : "Modo Identificar DESATIVADO.");
+        }
+
+        // --- Data Management Logic ---
+
+        var selectedIlhaId = null;
+
+        function onIlhaSelected() {
+            const id = document.getElementById('ilhaSelect').value;
+            if (!id) {
+                selectedIlhaId = null;
+                document.getElementById('ilhaInfo').textContent = "";
+                return;
+            }
+            selectedIlhaId = id;
+            const ilha = ilhas.find(i => i.id == id);
+            if (ilha) {
+                const lat = Array.isArray(ilha.coords) && ilha.coords.length >= 2 ? Number(ilha.coords[0]) : null;
+                const lon = Array.isArray(ilha.coords) && ilha.coords.length >= 2 ? Number(ilha.coords[1]) : null;
+                const latTxt = Number.isFinite(lat) ? lat.toFixed(5) : '-';
+                const lonTxt = Number.isFinite(lon) ? lon.toFixed(5) : '-';
+                document.getElementById('ilhaInfo').innerHTML = `
+                    <strong>Ilha Selecionada:</strong> ${ilha.nome}<br>
+                    Coordenadas: ${latTxt}, ${lonTxt}<br>
+                    <div style="margin-top: 10px; display: flex; gap: 8px;">
+                        <button onclick="downloadMandatoryExports()" style="padding: 4px 8px; font-size: 11px; background: #0f8bb3; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Download Obrigatorio (WMF + WMS)
+                        </button>
+                    </div>
+                `;
+
+                // Enable other tabs hints
+                document.getElementById('campanhaFormInfo').style.display = 'none';
+                document.getElementById('campanhasList').innerHTML = "Carregando campanhas...";
+
+                // Auto switch to list? Maybe not, stay on tab.
+            }
+        }
+
+        // --- Create Campaign ---
+        function triggerDownload(url) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadMandatoryExports() {
+            if (!selectedIlhaId) {
+                alert("Selecione uma ilha primeiro.");
+                return;
+            }
+            triggerDownload(`/api/export/wmf/${selectedIlhaId}`);
+            triggerDownload(`/api/export/wms/${selectedIlhaId}`);
+        }
+
+        async function loadBases() {
+            const res = await fetch('/api/bases-apoio', { headers: { 'Authorization': 'Bearer ' + authToken } });
+            const bases = await res.json();
+            const sel = document.getElementById('campanhaBase');
+            sel.innerHTML = '<option value="">-- Selecione --</option>';
+            bases.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.textContent = b.nome;
+                sel.appendChild(opt);
+            });
+        }
+        async function loadEmbarcacoes() {
+            const res = await fetch('/api/embarcacoes', { headers: { 'Authorization': 'Bearer ' + authToken } });
+            const embs = await res.json();
+            const sel = document.getElementById('campanhaEmbarcacao');
+            sel.innerHTML = '<option value="">-- Selecione --</option>';
+            embs.forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e.id;
+                opt.textContent = e.nome;
+                sel.appendChild(opt);
+            });
+        }
+
+        // Auto-Fill Name and Team Logic
+        async function loadEquipe() {
+            const res = await fetch('/api/equipe', { headers: { 'Authorization': 'Bearer ' + authToken } });
+            const membros = await res.json();
+
+            const container = document.getElementById('equipeList');
+            if (container) {
+                container.innerHTML = '';
+                if (membros.length === 0) {
+                    container.innerHTML = '<div style="color:#999; font-size:12px;">Nenhum membro cadastrado.</div>';
+                    return;
+                }
+
+                membros.forEach(m => {
+                    const div = document.createElement('div');
+                    div.style.marginBottom = '5px';
+                    const check = document.createElement('input');
+                    check.type = 'checkbox';
+                    check.value = m.id;
+                    check.name = 'equipe_member';
+                    check.style.marginRight = '8px';
+
+                    const label = document.createElement('span');
+                    label.textContent = m.nome_completo + (m.funcao ? ` (${m.funcao})` : '');
+                    label.style.fontSize = '12px';
+                    label.style.color = '#333';
+
+                    div.appendChild(check);
+                    div.appendChild(label);
+                    container.appendChild(div);
+                });
+            }
+        }
+
+
+
+        function getSelectedTeam() {
+            const checkboxes = document.querySelectorAll('input[name="equipe_member"]:checked');
+            return Array.from(checkboxes).map(cb => parseInt(cb.value));
+        }
+
+        let campaignSelectionState = {};
+        let activeCampaignIslandId = null;
+
+        function initializeCampaignSelectionState() {
+            const nextState = {};
+            (ilhas || []).forEach(ilha => {
+                const prev = campaignSelectionState[String(ilha.id)] || {};
+                const espacosState = {};
+                (ilha.espacos_amostrais || []).forEach(ea => {
+                    const prevEspaco = prev.espacos?.[String(ea.id)] || {};
+                    const prevSelected = prevEspaco.selected === true || (Array.isArray(prevEspaco.pontos) && prevEspaco.pontos.length > 0);
+                    espacosState[String(ea.id)] = {
+                        selected: prevSelected,
+                        point_number: extractPointNumberFromCode(ea.codigo)
+                    };
+                });
+                nextState[String(ilha.id)] = { ativo: !!prev.ativo, espacos: espacosState };
+            });
+            campaignSelectionState = nextState;
+            if (!activeCampaignIslandId && ilhas.length > 0) activeCampaignIslandId = String(ilhas[0].id);
+        }
+
+        function countCampaignSelection() {
+            let ilhasCount = 0;
+            let espacosCount = 0;
+            let pontosCount = 0;
+            Object.values(campaignSelectionState).forEach(ilhaState => {
+                let ilhaHasSelection = false;
+                Object.values(ilhaState.espacos || {}).forEach(espacoState => {
+                    if (espacoState.selected) {
+                        ilhaHasSelection = true;
+                        espacosCount += 1;
+                        pontosCount += 1;
+                    }
+                });
+                if (ilhaState.ativo || ilhaHasSelection) ilhasCount += 1;
+            });
+            return { ilhasCount, espacosCount, pontosCount };
+        }
+
+        function updateIlhasSelectionSummary() {
+            const summary = document.getElementById('ilhaSelectionSummary');
+            if (!summary) return;
+            const c = countCampaignSelection();
+            summary.innerHTML = `<span>Ilhas: ${c.ilhasCount}</span><span>Estacoes: ${c.espacosCount}</span><span>Pontos: ${c.pontosCount}</span>`;
+        }
+
+        function setIslandMethodSelection(ilhaId, methodKey) {
+            const ilha = ilhas.find(i => String(i.id) === String(ilhaId));
+            const ilhaState = campaignSelectionState[String(ilhaId)];
+            if (!ilha || !ilhaState) return;
+
+            let hasAny = false;
+            (ilha.espacos_amostrais || []).forEach(ea => {
+                const metodologia = normalizeTextForSort(ea.metodologia || '');
+                const isBA = metodologia.includes('ba');
+                const isFQVT = metodologia.includes('fq') || metodologia.includes('vt');
+                const shouldSelect = methodKey === 'ba' ? isBA : isFQVT;
+                ilhaState.espacos[String(ea.id)].selected = shouldSelect;
+                if (shouldSelect) hasAny = true;
+            });
+            ilhaState.ativo = hasAny;
+        }
+
+        function clearIslandSelection(ilhaId) {
+            const ilhaState = campaignSelectionState[String(ilhaId)];
+            if (!ilhaState) return;
+            ilhaState.ativo = false;
+            Object.values(ilhaState.espacos || {}).forEach(espacoState => { espacoState.selected = false; });
+        }
+
+        function togglePointSelection(ilhaId, espacoId) {
+            const espacoState = campaignSelectionState[String(ilhaId)]?.espacos?.[String(espacoId)];
+            if (!espacoState) return;
+            espacoState.selected = !espacoState.selected;
+            const ilhaState = campaignSelectionState[String(ilhaId)];
+            if (!ilhaState) return;
+            ilhaState.ativo = Object.values(ilhaState.espacos || {}).some(s => s.selected);
+        }
+
+        function askMethodForIslandSelection() {
+            const answer = prompt(
+                'Selecione o metodo para esta ilha:\\n' +
+                '1 - Busca Ativa\\n' +
+                '2 - Video Transecto\\n' +
+                '3 - Foto Quadrado\\n\\n' +
+                'Digite 1, 2 ou 3.'
+            );
+            if (answer === null) return null;
+            const value = String(answer).trim();
+            if (value === '1') return 'ba';
+            if (value === '2' || value === '3') return 'fqvt';
+            alert('Opcao invalida. Use 1, 2 ou 3.');
+            return null;
+        }
+
+        function renderCampaignIslandDetails() {
+            const detail = document.getElementById('ilhaDetailPane');
+            if (!detail) return;
+            const ilha = ilhas.find(i => String(i.id) === String(activeCampaignIslandId));
+            if (!ilha) {
+                detail.innerHTML = '<div style="font-size:12px; color:#777;">Selecione uma ilha para ver os pontos.</div>';
+                return;
+            }
+            const ilhaState = campaignSelectionState[String(ilha.id)] || { ativo: false, espacos: {} };
+            const espacos = ilha.espacos_amostrais || [];
+
+            detail.innerHTML = `
+                <div class="ilha-card-header" style="margin-bottom:10px;">
+                    <span>${ilha.nome}</span>
+                    <span class="ilha-meta">${espacos.length} estacao(oes)</span>
+                </div>
+                <div class="ilha-tools">
+                    <button type="button" class="ilha-tool-btn" data-action="method-ba">Selecionar BA</button>
+                    <button type="button" class="ilha-tool-btn" data-action="method-fqvt">Selecionar FQ/VT</button>
+                    <button type="button" class="ilha-tool-btn" data-action="clear-island">Limpar ilha</button>
+                </div>
+                <div>
+                    ${espacos.map(ea => {
+                        const state = ilhaState.espacos[String(ea.id)] || { selected: false };
+                        const latTxt = Number.isFinite(Number(ea.latitude)) ? Number(ea.latitude).toFixed(5) : '-';
+                        const lonTxt = Number.isFinite(Number(ea.longitude)) ? Number(ea.longitude).toFixed(5) : '-';
+                        return `
+                            <div class="espaco-card">
+                                <div class="espaco-title">
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                        <input type="checkbox" class="picker-checkbox" data-action="toggle-point" data-ilha-id="${ilha.id}" data-espaco-id="${ea.id}" ${state.selected ? 'checked' : ''}>
+                                        <span>${ea.codigo || ('EA ' + ea.id)}</span>
+                                    </label>
+                                    <span style="margin-left:auto; font-size:10px; color:#4f6d80; background:#edf5fb; border:1px solid #d5e5f1; border-radius:999px; padding:2px 8px;">${ea.metodologia || '-'}</span>
+                                </div>
+                                <div style="margin-left:30px; margin-top:2px; font-size:11px; color:#5b7284;">
+                                    Coordenadas: ${latTxt}, ${lonTxt}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function renderCampaignIslandSelector() {
+            const container = document.getElementById('ilhasSelectionContainer');
+            if (!container) return;
+            if (!Array.isArray(ilhas) || ilhas.length === 0) {
+                container.innerHTML = '<div style="color:#999; font-size:12px;">Carregando ilhas...</div>';
+                return;
+            }
+
+            const listHtml = ilhas.map(ilha => {
+                const isActive = String(ilha.id) === String(activeCampaignIslandId);
+                const ilhaState = campaignSelectionState[String(ilha.id)] || {};
+                const ilhaChecked = Object.values(ilhaState.espacos || {}).some(s => s.selected) || ilhaState.ativo;
+                const checked = ilhaChecked ? 'checked' : '';
+                return `
+                    <button type="button" class="ilha-list-item ${isActive ? 'active' : ''}" data-action="focus-island" data-ilha-id="${ilha.id}">
+                        <input type="checkbox" class="picker-checkbox" data-action="toggle-island" data-ilha-id="${ilha.id}" ${checked}>
+                        <span>${ilha.nome}</span>
+                    </button>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div id="ilhaSelectionSummary" class="ilha-selection-summary">Ilhas: 0 Estacoes: 0 Pontos: 0</div>
+                <div class="ilha-master-detail">
+                    <div id="ilhaListPane" class="ilha-list">${listHtml}</div>
+                    <div id="ilhaDetailPane" class="ilha-detail-panel"></div>
+                </div>
+            `;
+
+            renderCampaignIslandDetails();
+            updateIlhasSelectionSummary();
+        }
+
+        function bindIlhasSelectionInteractions() {
+            const container = document.getElementById('ilhasSelectionContainer');
+            if (!container || container.dataset.boundSelectionUX === '1') return;
+            container.dataset.boundSelectionUX = '1';
+
+            container.addEventListener('click', function (e) {
+                const target = e.target;
+                const actionEl = target.closest('[data-action]');
+                if (!actionEl) return;
+                const action = actionEl.dataset.action;
+                const ilhaId = actionEl.dataset.ilhaId ? String(actionEl.dataset.ilhaId) : activeCampaignIslandId;
+
+                if (action === 'focus-island') {
+                    activeCampaignIslandId = ilhaId;
+                    renderCampaignIslandSelector();
+                    return;
+                }
+
+                if (action === 'toggle-island') {
+                    e.stopPropagation();
+                    if (actionEl.checked) {
+                        const methodKey = askMethodForIslandSelection();
+                        if (!methodKey) {
+                            actionEl.checked = false;
+                            return;
+                        }
+                        setIslandMethodSelection(ilhaId, methodKey);
+                    } else {
+                        clearIslandSelection(ilhaId);
+                    }
+                    activeCampaignIslandId = ilhaId;
+                    renderCampaignIslandSelector();
+                    return;
+                }
+
+                if (action === 'method-ba') setIslandMethodSelection(activeCampaignIslandId, 'ba');
+                if (action === 'method-fqvt') setIslandMethodSelection(activeCampaignIslandId, 'fqvt');
+                if (action === 'clear-island') clearIslandSelection(activeCampaignIslandId);
+
+                if (action === 'toggle-point') {
+                    const espacoId = actionEl.dataset.espacoId;
+                    togglePointSelection(activeCampaignIslandId, espacoId);
+                }
+
+                renderCampaignIslandSelector();
+            });
+        }
+
+        function loadIlhasSelectionForCampaign() {
+            initializeCampaignSelectionState();
+            renderCampaignIslandSelector();
+            bindIlhasSelectionInteractions();
+        }
+
+        function buildCampanhaIlhasPayload() {
+            const ilhasPayload = [];
+            Object.entries(campaignSelectionState).forEach(([ilhaId, ilhaState]) => {
+                const selecao = [];
+                Object.entries(ilhaState.espacos || {}).forEach(([espacoId, espacoState]) => {
+                    if (espacoState.selected) {
+                        const pontoNumero = Number.isFinite(Number(espacoState.point_number))
+                            ? Number(espacoState.point_number)
+                            : 1;
+                        selecao.push({ espaco_amostral_id: parseInt(espacoId, 10), pontos: [pontoNumero] });
+                    }
+                });
+                if (selecao.length > 0) {
+                    ilhasPayload.push({ ilha_id: parseInt(ilhaId, 10), selecao: selecao });
+                }
+            });
+            return ilhasPayload;
+        }
+
+        async function createCampanha(e) {
+            e.preventDefault();
+            const ilhasPayload = buildCampanhaIlhasPayload();
+            if (ilhasPayload.length === 0) {
+                alert("Selecione ao menos uma ilha e uma estacao (ponto amostral).");
+                return;
+            }
+
+            const body = {
+                ilhas: ilhasPayload,
+                nome: document.getElementById('campanhaNome').value,
+                data: document.getElementById('campanhaData').value,
+                descricao: document.getElementById('campanhaDesc').value,
+                base_apoio_id: document.getElementById('campanhaBase').value ? parseInt(document.getElementById('campanhaBase').value) : null,
+                embarcacao_id: document.getElementById('campanhaEmbarcacao').value ? parseInt(document.getElementById('campanhaEmbarcacao').value) : null,
+                membros_equipe: getSelectedTeam()
+            };
+
+            try {
+                const res = await fetch('/api/campanhas', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + authToken
+                    },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('campanhaResult').textContent = "Campanha criada com sucesso! ID: " + data.campanha.id;
+                    document.getElementById('campanhaResult').style.display = 'block';
+                    document.getElementById('campanhaResult').style.background = '#d4edda';
+                    document.getElementById('campanhaResult').style.color = '#155724';
+                    document.getElementById('campanhaForm').reset();
+                } else {
+                    let msg = "Erro ao criar";
+                    if (data.detail) {
+                        if (typeof data.detail === 'string') {
+                            msg = data.detail;
+                        } else if (Array.isArray(data.detail)) {
+                            msg = data.detail.map(e => `${e.loc.join('.')} - ${e.msg}`).join('; ');
+                        } else {
+                            msg = JSON.stringify(data.detail);
+                        }
+                    }
+                    throw new Error(msg);
+                }
+            } catch (err) {
+                document.getElementById('campanhaResult').textContent = "Erro: " + err.message;
+                document.getElementById('campanhaResult').style.display = 'block';
+                document.getElementById('campanhaResult').style.background = '#f8d7da';
+                document.getElementById('campanhaResult').style.color = '#721c24';
+            }
+        }
+
+        // --- Uploads ---
+        async function uploadGeospatial(e) { /* Placeholder logic - same as before */ e.preventDefault(); alert("Funcionalidade de upload simulada."); }
+        async function uploadMedia(e) { /* Placeholder logic - same as before */ e.preventDefault(); alert("Funcionalidade de upload simulada."); }
+
+        // --- List Campaigns ---
+        async function loadCampanhasList() {
+            if (!selectedIlhaId) return;
+            const res = await fetch(`/api/ilhas/${selectedIlhaId}/campanhas`, { headers: { 'Authorization': 'Bearer ' + authToken } });
+            const data = await res.json();
+            const list = data.campanhas || [];
+            const container = document.getElementById('campanhasList');
+
+            if (list.length === 0) {
+                container.innerHTML = "Nenhuma campanha encontrada para esta ilha.";
+                return;
+            }
+
+            // Simple HTML list
+            let html = '<ul class="mock-list">';
+            list.forEach(c => {
+                html += `<li>
+                <strong>${c.nome}</strong> (${c.data}) 
+                <button onclick="selectCampanhaVisualizar(${c.id})" style="padding:2px 6px; font-size:11px; margin-left:10px;">Visualizar</button>
+            </li>`;
+            });
+            html += '</ul>';
+            container.innerHTML = html;
+        }
+
+        var selectedCampanhaId = null;
+        function selectCampanhaVisualizar(id) {
+            selectedCampanhaId = id;
+            switchDataTab('visualizar');
+            document.getElementById('visualizarInfo').innerHTML = "Campanha ID #" + id + " selecionada.";
+            document.getElementById('visualizarControls').style.display = 'block';
+            // Mock load media
+            document.getElementById('mediaGallery').innerHTML = '<div class="mock-thumb"></div><div class="mock-thumb"></div>';
+        }
+        // --- Users Admin ---
+        let selectedPasswordUserId = null;
+
+        function getErrorMessage(data, fallback) {
+            if (!data) return fallback;
+            if (typeof data.detail === 'string') return data.detail;
+            if (Array.isArray(data.detail)) return data.detail.map(item => item.msg || JSON.stringify(item)).join('; ');
+            return fallback;
+        }
+
+        async function loadUsers() {
+            const tbody = document.getElementById('usersListBody');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:8px;">Carregando...</td></tr>';
+
+            try {
+                const res = await fetch('/api/users', {
+                    headers: { 'Authorization': 'Bearer ' + authToken }
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    tbody.innerHTML = `<tr><td colspan="5" style="padding:8px;">Erro ao carregar usuarios: ${getErrorMessage(err, 'falha na consulta')}</td></tr>`;
+                    return;
+                }
+
+                const users = await res.json();
+                if (!Array.isArray(users) || users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="padding:8px;">Nenhum usuario encontrado.</td></tr>';
+                    return;
+                }
+
+                const currentUsername = localStorage.getItem('currentUser') || '';
+                let html = '';
+
+                users.forEach(u => {
+                    const nomePerfil = (u.perfil || 'usuario');
+                    const ativo = !!u.ativo;
+                    const isSelf = currentUsername === u.username;
+                    const safeUsername = String(u.username || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    const btnToggle = ativo
+                        ? `<button onclick="deactivateUser(${u.id})" ${isSelf ? 'disabled' : ''} style="padding:4px 8px; font-size:11px; border:1px solid #b37b7b; background:#fff5f5; color:#9a2c2c; border-radius:4px; cursor:${isSelf ? 'not-allowed' : 'pointer'};">Desativar</button>`
+                        : `<button onclick="activateUser(${u.id})" style="padding:4px 8px; font-size:11px; border:1px solid #6ca07b; background:#f1fff5; color:#1f6b34; border-radius:4px; cursor:pointer;">Reativar</button>`;
+                    const btnDelete = `<button onclick="logicalDeleteUser(${u.id})" ${isSelf ? 'disabled' : ''} style="padding:4px 8px; font-size:11px; border:1px solid #9a4040; background:#fff; color:#9a4040; border-radius:4px; cursor:${isSelf ? 'not-allowed' : 'pointer'};">Excluir</button>`;
+
+                    html += `<tr style="border-bottom:1px solid #eee;">
+                        <td style="padding:5px;">${u.id}</td>
+                        <td style="padding:5px;">${u.username}</td>
+                        <td style="padding:5px;">${nomePerfil}</td>
+                        <td style="padding:5px;">${ativo ? 'Sim' : 'Nao'}</td>
+                        <td style="padding:5px;">
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <button onclick="openUserPasswordChange(${u.id}, '${safeUsername}')" style="padding:4px 8px; font-size:11px; border:1px solid #8aa9bf; background:#f3faff; color:#225474; border-radius:4px; cursor:pointer;">Alterar senha</button>
+                                ${btnToggle}
+                                ${btnDelete}
+                            </div>
+                        </td>
+                    </tr>`;
+                });
+
+                tbody.innerHTML = html;
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" style="padding:8px;">Erro de conexao: ${err.message}</td></tr>`;
+            }
+        }
+
+        async function createUser(e) {
+            e.preventDefault();
+            const resultEl = document.getElementById('createUserResult');
+            resultEl.textContent = 'Criando...';
+            resultEl.style.color = '#555';
+
+            const body = {
+                username: document.getElementById('newUsername').value,
+                email: document.getElementById('newEmail').value,
+                nome_completo: document.getElementById('newNome').value,
+                password: document.getElementById('newPassword').value,
+                perfil: document.getElementById('newPerfil').value
+            };
+
+            try {
+                const res = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+                    body: JSON.stringify(body)
+                });
+
+                if (res.ok) {
+                    resultEl.textContent = 'Usuario criado com sucesso.';
+                    resultEl.style.color = 'green';
+                    document.getElementById('createUserForm').reset();
+                    loadUsers();
+                    return;
+                }
+
+                const err = await res.json().catch(() => ({}));
+                resultEl.textContent = 'Erro ao criar usuario: ' + getErrorMessage(err, 'falha na criacao');
+                resultEl.style.color = 'red';
+            } catch (err) {
+                resultEl.textContent = 'Erro de conexao: ' + err.message;
+                resultEl.style.color = 'red';
+            }
+        }
+
+        function openUserPasswordChange(userId, username) {
+            selectedPasswordUserId = userId;
+            const panel = document.getElementById('passwordResetPanel');
+            const target = document.getElementById('passwordResetTarget');
+            const result = document.getElementById('passwordResetResult');
+            const pass1 = document.getElementById('resetPasswordNew');
+            const pass2 = document.getElementById('resetPasswordConfirm');
+            if (!panel || !target || !result || !pass1 || !pass2) return;
+
+            target.textContent = 'Usuario: ' + username + ' (ID ' + userId + ')';
+            result.textContent = '';
+            pass1.value = '';
+            pass2.value = '';
+            panel.style.display = 'block';
+        }
+
+        function cancelUserPasswordChange() {
+            selectedPasswordUserId = null;
+            const panel = document.getElementById('passwordResetPanel');
+            const result = document.getElementById('passwordResetResult');
+            if (panel) panel.style.display = 'none';
+            if (result) result.textContent = '';
+        }
+
+        async function submitUserPasswordChange(e) {
+            e.preventDefault();
+            const result = document.getElementById('passwordResetResult');
+            const pass1 = document.getElementById('resetPasswordNew').value;
+            const pass2 = document.getElementById('resetPasswordConfirm').value;
+
+            if (!selectedPasswordUserId) {
+                result.textContent = 'Selecione um usuario para alterar a senha.';
+                result.style.color = 'red';
+                return;
+            }
+
+            if (!pass1 || pass1.length < 4) {
+                result.textContent = 'A senha deve ter no minimo 4 caracteres.';
+                result.style.color = 'red';
+                return;
+            }
+
+            if (pass1 !== pass2) {
+                result.textContent = 'As senhas nao conferem.';
+                result.style.color = 'red';
+                return;
+            }
+
+            result.textContent = 'Salvando...';
+            result.style.color = '#555';
+
+            try {
+                const res = await fetch(`/api/users/${selectedPasswordUserId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+                    body: JSON.stringify({ password: pass1 })
+                });
+
+                if (res.ok) {
+                    result.textContent = 'Senha alterada com sucesso.';
+                    result.style.color = 'green';
+                    setTimeout(cancelUserPasswordChange, 800);
+                    return;
+                }
+
+                const err = await res.json().catch(() => ({}));
+                result.textContent = 'Erro ao alterar senha: ' + getErrorMessage(err, 'falha na atualizacao');
+                result.style.color = 'red';
+            } catch (err) {
+                result.textContent = 'Erro de conexao: ' + err.message;
+                result.style.color = 'red';
+            }
+        }
+
+        async function deactivateUser(userId) {
+            if (!confirm('Confirmar desativacao deste usuario?')) return;
+            const res = await fetch(`/api/users/${userId}/deactivate`, {
+                method: 'PATCH',
+                headers: { 'Authorization': 'Bearer ' + authToken }
+            });
+            if (res.ok) {
+                loadUsers();
+                return;
+            }
+            const err = await res.json().catch(() => ({}));
+            alert('Erro ao desativar: ' + getErrorMessage(err, 'falha'));
+        }
+
+        async function activateUser(userId) {
+            const res = await fetch(`/api/users/${userId}/activate`, {
+                method: 'PATCH',
+                headers: { 'Authorization': 'Bearer ' + authToken }
+            });
+            if (res.ok) {
+                loadUsers();
+                return;
+            }
+            const err = await res.json().catch(() => ({}));
+            alert('Erro ao reativar: ' + getErrorMessage(err, 'falha'));
+        }
+
+        async function logicalDeleteUser(userId) {
+            if (!confirm('Confirmar exclusao logica deste usuario?')) return;
+            const res = await fetch(`/api/users/${userId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + authToken }
+            });
+            if (res.ok) {
+                cancelUserPasswordChange();
+                loadUsers();
+                return;
+            }
+            const err = await res.json().catch(() => ({}));
+            alert('Erro ao excluir: ' + getErrorMessage(err, 'falha'));
+        }
+
+        // --- Questionario Context ---
+        async function loadCampanhasForQuestionario() {
+            // Load all campaigns or filter? For now list recent.
+            if (!selectedIlhaId) {
+                document.getElementById('qCampanhaSelect').innerHTML = '<option>Selecione uma ilha na aba 1 primeiro</option>';
+                return;
+            }
+            const res = await fetch(`/api/ilhas/${selectedIlhaId}/campanhas`, { headers: { 'Authorization': 'Bearer ' + authToken } });
+            const data = await res.json();
+            const list = data.campanhas || [];
+
+            const sel = document.getElementById('qCampanhaSelect');
+            sel.innerHTML = '<option value="">-- Selecione --</option>';
+            list.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.nome + " (" + c.data + ")";
+                sel.appendChild(opt);
+            });
+        }
+
+        // Global var for Questionario Campanha ID
+        let selectedQCampanhaId = null;
+
+        function onQuestionarioCampanhaSelected() {
+            const val = document.getElementById('qCampanhaSelect').value;
+            selectedQCampanhaId = val; // Store globally
+            if (val) {
+                document.getElementById('qStep2').style.display = 'block';
+                loadMethodsSummary(val);
+            } else {
+                document.getElementById('qStep2').style.display = 'none';
+            }
+        }
+
+        function showMethodForm(type) {
+            // hide all first
+            document.getElementById('formBusca').style.display = 'none';
+            document.getElementById('formVideo').style.display = 'none';
+            document.getElementById('formFoto').style.display = 'none';
+
+            if (type === 'busca') document.getElementById('formBusca').style.display = 'block';
+            if (type === 'video') document.getElementById('formVideo').style.display = 'block';
+            if (type === 'foto') document.getElementById('formFoto').style.display = 'block';
+        }
+
+        function hideMethodForm(type) {
+            if (type === 'busca') document.getElementById('formBusca').style.display = 'none';
+            if (type === 'video') document.getElementById('formVideo').style.display = 'none';
+            if (type === 'foto') document.getElementById('formFoto').style.display = 'none';
+        }
+
+        // Coral Sol Modal Logic
+        let coralSolDetails = null;
+
+        function toggleCoralSolModal() {
+            const chk = document.getElementById('buscaCoralsol');
+            if (chk.checked) {
+                document.getElementById('coralSolModal').style.display = 'flex';
+            } else {
+                coralSolDetails = null;
+            }
+        }
+
+        function closeCoralSolModal() {
+            document.getElementById('coralSolModal').style.display = 'none';
+            document.getElementById('buscaCoralsol').checked = false;
+            coralSolDetails = null;
+        }
+
+        function confirmCoralSolDetails() {
+            const dataVal = document.getElementById('coralData').value;
+            const horaVal = document.getElementById('coralHora').value;
+            const tempIni = document.getElementById('coralTempIni').value;
+            const tempFim = document.getElementById('coralTempFim').value;
+            const profIni = document.getElementById('coralProfIni').value;
+            const profFim = document.getElementById('coralProfFim').value;
+            const iar = document.getElementById('coralIAR').value;
+
+            coralSolDetails = {
+                data: dataVal,
+                hora: horaVal,
+                temp_inicial: tempIni,
+                temp_final: tempFim,
+                prof_inicial: profIni,
+                prof_final: profFim,
+                iar: iar
+            };
+            document.getElementById('coralSolModal').style.display = 'none';
+        }
+
+        // Upload Helper (Single)
+        async function uploadMethodFile(inputId) {
+            const input = document.getElementById(inputId);
+            if (!input || !input.files || input.files.length === 0) return null;
+            if (!selectedQCampanhaId || !selectedIlhaId) return null;
+
+            const formData = new FormData();
+            formData.append('files', input.files[0]);
+
+            try {
+                const res = await fetch(`/api/campanhas/${selectedQCampanhaId}/media?ilha_id=${selectedIlhaId}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + authToken },
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success && data.files && data.files.length > 0) {
+                    return data.files[0].url || data.files[0];
+                }
+            } catch (err) {
+                console.error("Upload error", err);
+            }
+            return null;
+        }
+
+        // Upload Multiple Helper
+        async function uploadMultipleMethodFiles(inputId) {
+            const input = document.getElementById(inputId);
+            if (!input || !input.files || input.files.length === 0) return [];
+            if (!selectedQCampanhaId || !selectedIlhaId) return [];
+
+            const formData = new FormData();
+            for (let i = 0; i < input.files.length; i++) {
+                formData.append('files', input.files[i]);
+            }
+
+            try {
+                const res = await fetch(`/api/campanhas/${selectedQCampanhaId}/media?ilha_id=${selectedIlhaId}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + authToken },
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success && data.files) {
+                    return data.files.map(f => f.url || f);
+                }
+            } catch (err) {
+                console.error("Upload error", err);
+            }
+            return [];
+        }
+
+        // Real Submit Handlers
+        async function createBuscaAtiva(e) {
+            e.preventDefault();
+
+            // Uploads
+            const excelUrl = await uploadMethodFile('buscaExcelFile');
+            const percUrl = await uploadMethodFile('buscaPercursoFile');
+            const imagesUrls = await uploadMultipleMethodFiles('buscaImagensFile');
+
+            // Lat Lon
+            const lat = document.getElementById('buscaLat').value ? parseFloat(document.getElementById('buscaLat').value) : null;
+            const lon = document.getElementById('buscaLon').value ? parseFloat(document.getElementById('buscaLon').value) : null;
+
+            const body = {
+                campanha_id: parseInt(selectedQCampanhaId),
+                data_hora_inicio: null,
+                data_hora_fim: null,
+                encontrou_coral_sol: document.getElementById('buscaCoralsol').checked,
+                latitude: lat,
+                longitude: lon,
+                detalhes_coral: coralSolDetails,
+                imagens: imagesUrls,
+                planilha_excel_url: excelUrl,
+                arquivo_percurso_url: percUrl,
+                observacoes: "Registro criado via web"
+            };
+
+            await saveMethod('/api/campanhas/' + selectedQCampanhaId + '/busca-ativa', body, 'busca');
+        }
+
+        async function createVideoTransecto(e) {
+            e.preventDefault();
+            const videoUrl = await uploadMethodFile('videoFile');
+
+            const body = {
+                campanha_id: parseInt(selectedQCampanhaId),
+                nome_video: "Video Uploaded", // Mock
+                observacoes: "Video URL: " + (videoUrl || "N/A")
+            };
+            await saveMethod('/api/campanhas/' + selectedQCampanhaId + '/video-transectos', body, 'video');
+        }
+
+        async function createFotoquadrado(e) {
+            e.preventDefault();
+            const mosUrl = await uploadMethodFile('fotoMosaicoFile');
+            // TODO: Backend support
+            alert("Salvando Fotoquadrado... (Upload URL: " + mosUrl + ")");
+            hideMethodForm('foto');
+        }
+
+        async function saveMethod(endpoint, body, type) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + authToken
+                    },
+                    body: JSON.stringify(body)
+                });
+                if (res.ok) {
+                    alert("Salvo com sucesso!");
+                    hideMethodForm(type);
+                    loadMethodsSummary(selectedQCampanhaId);
+                } else {
+                    alert("Erro ao salvar.");
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function loadMethodsSummary(campanhaId) {
+            document.getElementById('methodsList').textContent = "Carregando registros...";
+            // Fetch logic would go here
+            document.getElementById('methodsList').textContent = "";
+        }
+        // Galeria de Imagens Logic
+        async function loadGaleriaImagens() {
+            const container = document.getElementById('galeriaContainer');
+            const loading = document.getElementById('galeriaLoading');
+            if (!container || !loading) return;
+
+            // Reset
+            container.innerHTML = '';
+            container.style.display = 'none';
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('/api/galeria-imagens');
+                if (response.ok) {
+                    const data = await response.json();
+                    renderGaleriaImagens(data.ilhas);
+                } else {
+                    container.innerHTML = '<div style="color:#ffc2c2;">Erro ao carregar imagens.</div>';
+                }
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<div style="color:#ffc2c2;">Erro de conexão.</div>';
+            } finally {
+                loading.style.display = 'none';
+                container.style.display = 'block';
+            }
+        }
+
+        function renderGaleriaImagens(ilhas) {
+            const container = document.getElementById('galeriaContainer');
+
+            if (!ilhas || ilhas.length === 0) {
+                container.innerHTML = '<div style="color:#c5d8e3;">Nenhuma imagem encontrada.</div>';
+                return;
+            }
+
+            ilhas.forEach(ilha => {
+                const ilhaSection = document.createElement('div');
+                ilhaSection.style.marginBottom = '20px';
+                ilhaSection.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+                ilhaSection.style.paddingBottom = '15px';
+
+                const title = document.createElement('h4');
+                title.textContent = ilha.nome;
+                title.style.color = '#2ec1f1';
+                title.style.marginBottom = '10px';
+                title.style.borderLeft = '3px solid #0f8bb3';
+                title.style.paddingLeft = '10px';
+                ilhaSection.appendChild(title);
+
+                if (ilha.imagens && ilha.imagens.length > 0) {
+                    const grid = document.createElement('div');
+                    grid.style.display = 'grid';
+                    grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(140px, 1fr))';
+                    grid.style.gap = '10px';
+
+                    ilha.imagens.forEach(img => {
+                        const card = document.createElement('div');
+                        card.style.background = 'rgba(6,20,31,0.6)';
+                        card.style.borderRadius = '6px';
+                        card.style.overflow = 'hidden';
+                        card.style.border = '1px solid rgba(255,255,255,0.1)';
+
+                        const imgWrapper = document.createElement('div');
+                        imgWrapper.style.height = '100px';
+                        imgWrapper.style.overflow = 'hidden';
+                        imgWrapper.style.display = 'flex';
+                        imgWrapper.style.alignItems = 'center';
+                        imgWrapper.style.justifyContent = 'center';
+                        imgWrapper.style.backgroundColor = '#000';
+
+                        const image = document.createElement('img');
+                        image.src = img.url;
+                        image.style.width = '100%';
+                        image.style.height = '100%';
+                        image.style.objectFit = 'cover';
+                        image.style.cursor = 'pointer';
+                        image.onclick = () => window.open(img.url, '_blank');
+
+                        imgWrapper.appendChild(image);
+                        card.appendChild(imgWrapper);
+
+                        const info = document.createElement('div');
+                        info.style.padding = '8px';
+
+                        const type = document.createElement('div');
+                        type.textContent = img.type;
+                        type.style.fontSize = '10px';
+                        type.style.color = '#2ec1f1';
+                        type.style.fontWeight = 'bold';
+                        type.style.marginBottom = '4px';
+
+                        const date = document.createElement('div');
+                        if (img.date) {
+                            const dateObj = new Date(img.date);
+                            date.textContent = dateObj.toLocaleDateString();
+                        } else {
+                            date.textContent = "-";
+                        }
+                        date.style.fontSize = '10px';
+                        date.style.color = '#777';
+
+                        const label = document.createElement('div');
+                        label.textContent = img.label;
+                        label.title = img.label;
+                        label.style.fontSize = '11px';
+                        label.style.color = '#c5d8e3';
+                        label.style.whiteSpace = 'nowrap';
+                        label.style.overflow = 'hidden';
+                        label.style.textOverflow = 'ellipsis';
+                        label.style.marginTop = '4px';
+
+                        info.appendChild(type);
+                        info.appendChild(date);
+                        info.appendChild(label);
+                        card.appendChild(info);
+
+                        grid.appendChild(card);
+                    });
+
+                    ilhaSection.appendChild(grid);
+                } else {
+                    const noImgs = document.createElement('div');
+                    noImgs.textContent = 'Nenhuma imagem registrada.';
+                    noImgs.style.fontSize = '12px';
+                    noImgs.style.color = '#666';
+                    noImgs.style.fontStyle = 'italic';
+                    ilhaSection.appendChild(noImgs);
+                }
+
+                container.appendChild(ilhaSection);
+            });
+        }
+    </script>
+</body>
+
+</html>

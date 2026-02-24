@@ -1,0 +1,411 @@
+<!-- Campaign Details Modal -->
+<div class="modal-overlay" id="campaignDetailsModal" role="dialog" aria-modal="true" aria-hidden="true"
+    style="display:none; z-index: 2005;">
+    <div class="modal-card" style="width: 900px; max-width: 95%;">
+        <!-- Header -->
+        <div
+            style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #123247; padding-bottom:10px; margin-bottom:15px; background: #f8f9fa; padding: 15px;">
+            <h3 class="modal-title" style="margin:0; color: #333;" id="campaignDetailTitle">Detalhes da Campanha</h3>
+            <button onclick="closeCampaignDetailsModal()"
+                style="background:transparent; border:none; color:#333; font-size:20px; cursor:pointer;">&times;</button>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div style="display:flex; padding: 0 15px; border-bottom: 1px solid #ddd; background: #fff;">
+            <button class="cd-tab active" onclick="switchCdTab('geral', event)">Geral</button>
+            <button class="cd-tab" onclick="switchCdTab('busca', event)">Busca Ativa</button>
+            <button class="cd-tab" onclick="switchCdTab('video', event)">Vídeo Transecto</button>
+            <button class="cd-tab" onclick="switchCdTab('foto', event)">Foto Quadrado</button>
+        </div>
+
+        <div class="modal-body" style="padding: 20px;">
+
+            <!-- Tab: Geral -->
+            <div id="cd-tab-geral" class="cd-content">
+                <!-- Info Section -->
+                <div class="mock-section" style="background: #fff; border: 1px solid #ddd; margin-bottom: 20px;">
+                    <h4 style="color: #0f8bb3; border-bottom: 1px solid #eee; padding-bottom: 5px;">Informações
+                        Gerais</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px; color: #333;">
+                        <div><strong>Nome:</strong> <span id="cdNome"></span></div>
+                        <div><strong>Ilha:</strong> <span id="cdIlha"></span></div>
+                        <div><strong>Data:</strong> <span id="cdData"></span></div>
+                        <div><strong>Status:</strong> <span id="cdStatus"></span></div>
+                        <div style="grid-column: span 2;"><strong>Descrição:</strong> <span id="cdDesc"></span></div>
+                    </div>
+                </div>
+
+                <!-- Media Section -->
+                <div class="mock-section" style="background: #fff; border: 1px solid #ddd; margin-bottom: 20px;">
+                    <h4 style="color: #0f8bb3; border-bottom: 1px solid #eee; padding-bottom: 5px;">Galeria de Mídia
+                    </h4>
+                    <div id="campaignDetailGallery"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; max-height: 300px; overflow-y: auto;">
+                        <!-- Images/Videos populated by JS -->
+                        <div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #777;">Carregando
+                            mídia...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Files Section -->
+                <div class="mock-section" style="background: #fff; border: 1px solid #ddd; margin-bottom: 20px;">
+                    <h4 style="color: #0f8bb3; border-bottom: 1px solid #eee; padding-bottom: 5px;">Arquivos da
+                        Campanha
+                    </h4>
+                    <ul id="campaignDetailFiles" class="mock-list" style="max-height: 150px; overflow-y: auto;">
+                        <!-- Files populated by JS -->
+                        <li style="color: #777;">Carregando arquivos...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tab: Busca Ativa -->
+            <div id="cd-tab-busca" class="cd-content" style="display:none;">
+                <h4 style="color: #0f8bb3;">Registros de Busca Ativa</h4>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Est.</th>
+                                <th>Busca #</th>
+                                <th>Hora</th>
+                                <th>Prof (m)</th>
+                                <th>Coral-sol?</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cdBuscaBody">
+                            <tr>
+                                <td colspan="5">Carregando...</td>
+                            <tr>
+                                <td colspan="10">Carregando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Video Transecto -->
+            <div id="cd-tab-video" class="cd-content" style="display:none;">
+                <h4 style="color: #0f8bb3;">Registros de Vídeo Transecto</h4>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Est.</th>
+                                <th>Hora</th>
+                                <th>Prof (m)</th>
+                                <th>Temp. (°C)</th>
+                                <th>Vis. (m)</th>
+                                <th>Riqueza</th>
+                                <th>Shannon</th>
+                                <th>Jaccard</th>
+                                <th>Meteo</th>
+                                <th>Vídeo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cdVideoBody">
+                            <tr>
+                                <td colspan="10">Carregando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Foto Quadrado -->
+            <div id="cd-tab-foto" class="cd-content" style="display:none;">
+                <h4 style="color: #0f8bb3;">Registros de Foto Quadrado</h4>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Est.</th>
+                                <th>Hora</th>
+                                <th>Prof (m)</th>
+                                <th>Temp (°C)</th>
+                                <th>Vis. (m)</th>
+                                <th>Riqueza</th>
+                                <th>Shannon</th>
+                                <th>Meteo</th>
+                                <th>Mosaico</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cdFotoBody">
+                            <tr>
+                                <td colspan="9">Carregando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    .cd-tab {
+        padding: 10px 20px;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        font-weight: bold;
+        color: #777;
+    }
+
+    .cd-tab.active {
+        color: #0f8bb3;
+        border-bottom-color: #0f8bb3;
+    }
+
+    .cd-tab:hover {
+        background: rgba(0, 0, 0, 0.02);
+    }
+
+    .cd-content {
+        animation: fadeIn 0.2s;
+    }
+
+    .table-container {
+        overflow-x: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #eee;
+        text-align: left;
+    }
+
+    .data-table th {
+        background: #f1f1f1;
+        font-weight: 600;
+        color: #555;
+    }
+</style>
+
+<script>
+    function closeCampaignDetailsModal() {
+        document.getElementById('campaignDetailsModal').style.display = 'none';
+    }
+
+    function switchCdTab(tabName, event) {
+        // Hide all contents
+        document.querySelectorAll('.cd-content').forEach(el => el.style.display = 'none');
+        // Show target
+        document.getElementById('cd-tab-' + tabName).style.display = 'block';
+
+        // Update tab buttons
+        document.querySelectorAll('.cd-tab').forEach(btn => btn.classList.remove('active'));
+        // Find the button that called this (approximate) or loop to match index.
+        // Simpler: rely on text content or assume order?
+        // Let's iterate and check text or add ID to buttons.
+        // Adding logic to highlight clicked:
+        if (event && event.target) {
+            event.target.classList.add('active');
+        } else {
+            // Fallback for initial call without event
+            const buttons = document.querySelectorAll('.cd-tab');
+            buttons.forEach(btn => {
+                if (btn.textContent.toLowerCase().includes(tabName.toLowerCase())) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+    }
+
+    async function openCampaignDetails(campanhaId, ilhaId, campanhaNome) {
+        document.getElementById('campaignDetailsModal').style.display = 'flex';
+        document.getElementById('campaignDetailTitle').textContent = campanhaNome || "Detalhes da Campanha";
+
+        // Reset contents & Switch to Geral
+        switchCdTab('geral');
+        document.querySelectorAll('.cd-tab').forEach((btn, i) => {
+            if (i === 0) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+
+        // Clear Fields
+        document.getElementById('cdNome').textContent = "Carregando...";
+        document.getElementById('cdIlha').textContent = "";
+        document.getElementById('cdData').textContent = "";
+        document.getElementById('cdStatus').textContent = "";
+        document.getElementById('cdDesc').textContent = "";
+        document.getElementById('campaignDetailGallery').innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #777;">Carregando mídia...</div>';
+        document.getElementById('campaignDetailFiles').innerHTML = '<li style="color: #777;">Carregando arquivos...</li>';
+        document.getElementById('cdBuscaBody').innerHTML = '<tr><td colspan="10">Carregando...</td></tr>';
+        document.getElementById('cdVideoBody').innerHTML = '<tr><td colspan="10">Carregando...</td></tr>';
+        document.getElementById('cdFotoBody').innerHTML = '<tr><td colspan="9">Carregando...</td></tr>';
+
+        try {
+            // 1. Fetch Campaign Details (Currently leveraging existing ilhas route or we might need a direct one if we want full details)
+            // But from the filter we have basic info. Let's rely on what we can get.
+            // Actually, we can use the `get_campanha_files` and `media-list` as proxies for existence and content.
+            // For proper "details" like description/team, we might need to fetch the list again or look it up from the global list in memory.
+            // For now, let's just assume we pass the basic info or I'll implement a simple lookup if needed.
+            // Optimization: Fetch the files and media which are independent.
+
+            // Set basic info we have (passed from caller)
+            document.getElementById('cdNome').textContent = campanhaNome;
+            document.getElementById('cdIlha').textContent = "ID: " + ilhaId; // Placeholder until we have name
+
+            // Fetch Files
+            fetch(`/api/campanhas/${campanhaId}/files?ilha_id=${ilhaId}`).then(r => r.json()).then(response => {
+                const filesList = document.getElementById('campaignDetailFiles');
+                filesList.innerHTML = '';
+
+                // Flatten the response object
+                const files = [...(response.geospatial || []), ...(response.media || [])];
+
+                if (files.length === 0) {
+                    filesList.innerHTML = '<li style="color: #777;">Nenhum arquivo encontrado.</li>';
+                } else {
+                    files.forEach(f => {
+                        const li = document.createElement('li');
+                        // Currently the API returns names. We need a download route.
+                        // Assuming /files/download/{ilha}/{campanha}/{file} exists or similar.
+                        // Checking routes/files.py would be good, but for now let's just list them.
+                        li.innerHTML = `<span style="color:#0f8bb3;">💾</span> ${f.nome} <span style="font-size:11px; color:#999;">(${f.tamanho} bytes)</span>`;
+                        filesList.appendChild(li);
+                    });
+                }
+            }).catch(e => {
+                console.error("Error loading files", e);
+                document.getElementById('campaignDetailFiles').innerHTML = '<li style="color: red;">Erro ao carregar arquivos.</li>';
+            });
+
+            // Fetch Media
+            fetch(`/api/campanhas/${campanhaId}/media-list?ilha_id=${ilhaId}`).then(r => r.json()).then(mediaData => {
+                const gallery = document.getElementById('campaignDetailGallery');
+                gallery.innerHTML = '';
+                if (mediaData.media.length === 0) {
+                    gallery.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #777;">Nenhuma mídia encontrada.</div>';
+                } else {
+                    mediaData.media.forEach(m => {
+                        const div = document.createElement('div');
+                        div.className = 'mock-thumb';
+                        div.style.height = '100px';
+                        div.style.cursor = 'pointer';
+
+                        // Check extension
+                        const isVideo = m.url.match(/\.(mp4|mov|avi)$/i);
+
+                        if (isVideo) {
+                            div.innerHTML = `<video src="${m.url}" style="width:100%; height:100%; object-fit:cover;"></video><span style="position:absolute; top:5px; right:5px; background:rgba(0,0,0,0.6); color:#fff; padding:2px 5px; font-size:10px; border-radius:3px;">▶ Vídeo</span>`;
+                            div.onclick = () => window.open(m.url, '_blank'); // Simple video player
+                        } else {
+                            div.innerHTML = `<img src="${m.url}" style="width:100%; height:100%; object-fit:cover;" />`;
+                            div.onclick = () => {
+                                // Simple lightbox
+                                const lightbox = document.getElementById('lightbox');
+                                const content = document.getElementById('lightboxContent');
+                                content.innerHTML = `<img src="${m.url}" style="max-width:100%; max-height:80vh;" />`;
+                                lightbox.style.display = 'flex';
+                            };
+                        }
+                        gallery.appendChild(div);
+                    });
+                }
+            }).catch(e => {
+                console.error("Error loading media", e);
+                document.getElementById('campaignDetailGallery').innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: red;">Erro ao carregar mídia.</div>';
+            });
+
+            // 2. Fetch Full Details (New Logic)
+            const resp = await fetch(`/api/campanhas/${campanhaId}/full-details`);
+            if (resp.ok) {
+                const data = await resp.json();
+
+                // Helper for Meteo JSON
+                const fmtMeteo = (m) => m ? `<span title="${JSON.stringify(m)}">☁️</span>` : '-';
+                const fmtFile = (url, icon) => url ? `<a href="${url}" target="_blank">${icon}</a>` : '-';
+
+                // Populate Busca Ativa
+                const buscaBody = document.getElementById('cdBuscaBody');
+                buscaBody.innerHTML = '';
+                if (data.buscas.length === 0) buscaBody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#999;">Nenhum registro encontrado.</td></tr>';
+                else data.buscas.forEach(b => {
+                    const row = `<tr>
+                        <td>${b.estacao}</td>
+                        <td>${b.numero_busca || '-'}</td>
+                        <td>${b.hora_inicio || '-'}</td>
+                        <td>${b.duracao || '-'}</td>
+                        <td>${b.prof_ini || '-'} a ${b.prof_fim || '-'}</td>
+                        <td>${b.temp_ini || '-'} a ${b.temp_fim || '-'}</td>
+                        <td>↕${b.vis_vert || '-'} ↔${b.vis_hor || '-'}</td>
+                        <td>${b.encontrou_coralsol ? '<span style="color:red; font-weight:bold;">SIM</span>' : 'Não'}</td>
+                        <td style="text-align:center;">${fmtMeteo(b.dados_meteo)}</td>
+                        <td>
+                            ${fmtFile(b.excel_url, '📊')}
+                            ${fmtFile(b.track_url, '🗺️')}
+                        </td>
+                    </tr>`;
+                    buscaBody.innerHTML += row;
+                });
+
+                // Populate Video
+                const videoBody = document.getElementById('cdVideoBody');
+                videoBody.innerHTML = '';
+                if (data.videos.length === 0) videoBody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#999;">Nenhum registro encontrado.</td></tr>';
+                else data.videos.forEach(v => {
+                    const row = `<tr>
+                        <td>${v.estacao}</td>
+                        <td>${v.hora || '-'}</td>
+                        <td>${v.prof_ini || '-'} a ${v.prof_fim || '-'}</td>
+                        <td>${v.temp_ini || '-'} a ${v.temp_fim || '-'}</td>
+                        <td>↕${v.vis_vert || '-'} ↔${v.vis_hor || '-'}</td>
+                        <td>${v.riqueza || '-'}</td>
+                        <td>${v.shannon || '-'}</td>
+                        <td>${v.jaccard || '-'}</td>
+                        <td style="text-align:center;">${fmtMeteo(v.dados_meteo)}</td>
+                        <td style="text-align:center;">${fmtFile(v.video_url, '🎥')}</td>
+                    </tr>`;
+                    videoBody.innerHTML += row;
+                });
+
+                // Populate Foto
+                const fotoBody = document.getElementById('cdFotoBody');
+                fotoBody.innerHTML = '';
+                if (data.fotos.length === 0) fotoBody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#999;">Nenhum registro encontrado.</td></tr>';
+                else data.fotos.forEach(f => {
+                    const row = `<tr>
+                        <td>${f.estacao}</td>
+                        <td>${f.hora || '-'}</td>
+                        <td>${f.profundidade || '-'}</td>
+                        <td>${f.temperatura || '-'}</td>
+                        <td>↕${f.vis_vert || '-'} ↔${f.vis_hor || '-'}</td>
+                        <td>${f.riqueza || '-'}</td>
+                        <td>${f.shannon || '-'}</td>
+                        <td style="text-align:center;">${fmtMeteo(f.dados_meteo)}</td>
+                        <td style="text-align:center;">${fmtFile(f.mosaico_url, '🖼️')}</td>
+                    </tr>`;
+                    fotoBody.innerHTML += row;
+                });
+
+            } else {
+                console.error("Failed to load full details");
+                document.getElementById('cdBuscaBody').innerHTML = '<tr><td colspan="10" style="color: red;">Erro ao carregar dados.</td></tr>';
+                document.getElementById('cdVideoBody').innerHTML = '<tr><td colspan="10" style="color: red;">Erro ao carregar dados.</td></tr>';
+                document.getElementById('cdFotoBody').innerHTML = '<tr><td colspan="9" style="color: red;">Erro ao carregar dados.</td></tr>';
+            }
+
+        } catch (e) {
+            console.error("Error loading campaign details", e);
+            document.getElementById('campaignDetailFiles').innerHTML = '<li style="color: red;">Erro ao carregar arquivos.</li>';
+            document.getElementById('campaignDetailGallery').innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: red;">Erro ao carregar mídia.</div>';
+            document.getElementById('cdBuscaBody').innerHTML = '<tr><td colspan="10" style="color: red;">Erro ao carregar dados.</td></tr>';
+            document.getElementById('cdVideoBody').innerHTML = '<tr><td colspan="10" style="color: red;">Erro ao carregar dados.</td></tr>';
+            document.getElementById('cdFotoBody').innerHTML = '<tr><td colspan="9" style="color: red;">Erro ao carregar dados.</td></tr>';
+        }
+    }
+</script>

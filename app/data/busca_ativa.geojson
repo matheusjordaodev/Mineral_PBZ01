@@ -1,0 +1,32 @@
+{
+  "type": "FeatureCollection",
+  "name": "busca_ativa",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "BA_001",
+        "campanha": "2023-01",
+        "descricao": "Ponto de Busca Ativa 1",
+        "profundidade_m": 12
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-44.9, -23.51]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "BA_002",
+        "campanha": "2023-01",
+        "descricao": "Ponto de Busca Ativa 2",
+        "profundidade_m": 18
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-44.89, -23.5]
+      }
+    }
+  ]
+}

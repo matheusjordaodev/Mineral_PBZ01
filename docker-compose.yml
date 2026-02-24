@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: pmascc_app
+    command: uvicorn app:app --host 0.0.0.0 --port 8080 --reload
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - ./app/uploads:/app/app/uploads
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://testedb:%40Ma24179512@teste-mineral.postgres.database.azure.com:5432/postgres

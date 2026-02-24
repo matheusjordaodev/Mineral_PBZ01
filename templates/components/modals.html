@@ -1,0 +1,98 @@
+<!-- Mock Generic Modal -->
+<div class="modal-overlay" id="mockModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card">
+        <h3 class="modal-title" id="modalTitle"></h3>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-footer">
+            <button onclick="closeMockModal()">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal for Island -->
+<div class="modal-overlay" id="detailModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card" style="width: 850px; max-width: 95%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 class="modal-title" id="detailTitle" style="margin:0;">🏝️ Detalhes da Ilha</h3>
+            <button onclick="closeDetailModal()"
+                style="background:transparent; border:none; color:#333; font-size:22px; cursor:pointer;">&times;</button>
+        </div>
+        <div class="modal-body" id="detailBody"
+            style="display:flex; flex-direction:column; gap:15px; max-height:70vh; overflow-y:auto;">
+
+            <!-- Stations Section -->
+            <div class="mock-section">
+                <h4 style="margin-bottom:8px;">📍 Estações Amostrais</h4>
+                <div id="detailStations" style="font-size:13px; color:#333;"></div>
+            </div>
+
+            <!-- Photo Gallery Section -->
+            <div class="mock-section">
+                <h4 style="margin-bottom:8px;">📷 Galeria de Fotos</h4>
+                <div id="detailGallery" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+            </div>
+
+            <!-- Campaigns Section -->
+            <div class="mock-section">
+                <h4 style="margin-bottom:8px;">📋 Campanhas Realizadas</h4>
+                <div id="detailCampaigns" style="font-size:13px; color:#333;"></div>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeDetailModal()">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Station Detail Modal -->
+<div class="modal-overlay" id="stationModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card" style="width: 900px; max-width: 95%; display: flex; flex-direction: column; gap: 0;">
+
+        <!-- Header -->
+        <div
+            style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #123247; padding-bottom:10px; margin-bottom:15px;">
+            <h3 class="modal-title" id="stationTitle" style="margin:0;">Estação #IC01</h3>
+            <button onclick="closeStationModal()"
+                style="background:transparent; border:none; color:#333; font-size:20px; cursor:pointer;">&times;</button>
+        </div>
+
+        <div class="modal-body" style="display: flex; gap: 20px; padding:0; margin:0;">
+
+            <!-- Left Column: Carousel -->
+            <div style="flex: 1; min-width: 300px;">
+                <div
+                    style="background:#f0f0f0; height:300px; border-radius:4px; position:relative; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                    <img id="stationImage" src="" style="max-width:100%; max-height:100%; object-fit:contain;" />
+
+                    <!-- Simple Nav Buttons -->
+                    <button onclick="prevImage()"
+                        style="position:absolute; left:10px; background:rgba(0,0,0,0.5); border:none; color:white; font-size:24px; cursor:pointer; padding:10px;">&#10094;</button>
+                    <button onclick="nextImage()"
+                        style="position:absolute; right:10px; background:rgba(0,0,0,0.5); border:none; color:white; font-size:24px; cursor:pointer; padding:10px;">&#10095;</button>
+                </div>
+                <div id="stationImageCaption" style="text-align:center; font-size:12px; color:#555; margin-top:5px;">Imagens do Fotoquadrado
+                </div>
+            </div>
+
+            <!-- Right Column: Data Table -->
+            <div style="flex: 1;">
+                <table style="width:100%; border-collapse:collapse; color:#333; font-size:13px;">
+                    <tbody id="stationTableBody">
+                        <!-- JS Populated -->
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox for Media -->
+<div id="lightbox"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; align-items:center; justify-content:center; flex-direction:column;">
+    <button onclick="closeLightbox()"
+        style="position:absolute; top:20px; right:20px; color:#fff; background:none; border:none; font-size:30px; cursor:pointer;">&times;</button>
+    <div id="lightboxContent" style="max-width:90%; max-height:80%;"></div>
+    <div id="lightboxCaption" style="color:#fff; margin-top:10px; font-family:sans-serif;"></div>
+</div>

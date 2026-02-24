@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+psycopg2-binary
+sqlalchemy
+geoalchemy2
+shapely
+python-multipart
+passlib[bcrypt]
+python-jose[cryptography]
+jinja2
+matplotlib
+azure-storage-blob

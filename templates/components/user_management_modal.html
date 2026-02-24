@@ -1,0 +1,227 @@
+<!-- User Management Modal -->
+<div class="modal-overlay" id="userManagementModal" role="dialog" aria-modal="true" aria-hidden="true"
+    style="display:none;">
+    <div class="modal-card" style="width: 700px; max-width: 95%;">
+        <div
+            style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #123247; padding-bottom:10px; margin-bottom:15px;">
+            <h3 class="modal-title" style="margin:0;">Gerenciar Usuários</h3>
+            <button onclick="closeUserManagementModal()"
+                style="background:transparent; border:none; color:#333; font-size:20px; cursor:pointer;">&times;</button>
+        </div>
+
+        <div class="modal-body" style="min-height:300px;">
+            <div class="mock-section">
+                <!-- Create User Form -->
+                <div
+                    style="margin-bottom:20px; padding:15px; background:#fff; border-radius:8px; border:1px solid #ddd;">
+                    <h5 style="margin-top:0; color:#0f8bb3;">Criar Novo Usuário</h5>
+                    <form id="createUserForm" onsubmit="createUser(event)">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-size:12px; color:#333;">Username
+                                    *</label>
+                                <input type="text" id="newUsername" required
+                                    style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; background:#fff; color:#333;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-size:12px; color:#333;">Email
+                                    *</label>
+                                <input type="email" id="newEmail" required
+                                    style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; background:#fff; color:#333;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-size:12px; color:#333;">Nome
+                                    Completo</label>
+                                <input type="text" id="newNome"
+                                    style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; background:#fff; color:#333;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-size:12px; color:#333;">Senha
+                                    *</label>
+                                <input type="password" id="newPassword" required
+                                    style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; background:#fff; color:#333;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-size:12px; color:#333;">Perfil
+                                    *</label>
+                                <select id="newPerfil"
+                                    style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; background:#fff; color:#333;">
+                                    <option value="usuario">Usuário</option>
+                                    <option value="pesquisador">Pesquisador</option>
+                                    <option value="admin">Administrador</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit"
+                            style="margin-top:10px; padding:8px 16px; background:#0f8bb3; color:#fff; border:none; border-radius:4px; cursor:pointer;">Criar
+                            Usuário</button>
+                        <div id="createUserResult" style="margin-top:10px; font-size:12px;"></div>
+                    </form>
+                </div>
+
+                <!-- User List -->
+                <h5 style="color:#0f8bb3;">Lista de Usuários</h5>
+                <div style="max-height:200px; overflow-y:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px; color:#333;">
+                        <thead>
+                            <tr style="text-align:left; border-bottom:1px solid #ddd;">
+                                <th style="padding:5px;">ID</th>
+                                <th style="padding:5px;">Username</th>
+                                <th style="padding:5px;">Perfil</th>
+                                <th style="padding:5px;">Ativo</th>
+                                <th style="padding:5px;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersListBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Password Reset Form -->
+                <div id="passwordResetPanel"
+                    style="display:none; margin-top:16px; padding:12px; background:#f8fbff; border:1px solid #d7e6f3; border-radius:8px;">
+                    <h5 style="margin:0 0 10px 0; color:#0f8bb3;">Alterar Senha</h5>
+                    <div id="passwordResetTarget" style="font-size:12px; color:#444; margin-bottom:8px;"></div>
+                    <form onsubmit="submitUserPasswordChange(event)">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-size:12px; color:#333;">Nova senha
+                                    *</label>
+                                <input type="password" id="resetPasswordNew" required minlength="4"
+                                    style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; background:#fff; color:#333;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-size:12px; color:#333;">Confirmar
+                                    senha *</label>
+                                <input type="password" id="resetPasswordConfirm" required minlength="4"
+                                    style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; background:#fff; color:#333;">
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px; margin-top:10px;">
+                            <button type="submit"
+                                style="padding:8px 12px; background:#0f8bb3; color:#fff; border:none; border-radius:4px; cursor:pointer;">Salvar
+                                senha</button>
+                            <button type="button" onclick="cancelUserPasswordChange()"
+                                style="padding:8px 12px; background:#fff; color:#555; border:1px solid #ccc; border-radius:4px; cursor:pointer;">Cancelar</button>
+                        </div>
+                        <div id="passwordResetResult" style="margin-top:8px; font-size:12px;"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openUserManagementModal() {
+        document.getElementById('userManagementModal').style.display = 'flex';
+        document.getElementById('userManagementModal').setAttribute('aria-hidden', 'false');
+        if (typeof loadUsers === 'function') {
+            loadUsers();
+        }
+    }
+
+    function closeUserManagementModal() {
+        document.getElementById('userManagementModal').style.display = 'none';
+        document.getElementById('userManagementModal').setAttribute('aria-hidden', 'true');
+    }
+
+    const userManagementModalEl = document.getElementById('userManagementModal');
+    if (userManagementModalEl) {
+        userManagementModalEl.addEventListener('click', function (e) {
+            if (e.target === userManagementModalEl) {
+                closeUserManagementModal();
+            }
+        });
+    }
+
+    async function createUser(event) {
+        event.preventDefault();
+        const username = document.getElementById('newUsername').value;
+        const email = document.getElementById('newEmail').value;
+        const password = document.getElementById('newPassword').value;
+        const nome = document.getElementById('newNome').value;
+        const perfil = document.getElementById('newPerfil').value;
+        const resultEl = document.getElementById('createUserResult');
+
+        resultEl.textContent = "Criando...";
+
+        try {
+            // Mock API or Real API call here
+            // In a real app this would point to /api/users
+            // For now assuming the existing createUser logic was using a fetch
+
+            /* 
+               Checking the original file logic, it seemed to rely on a global `createUser` function or similar 
+               that might have been defined in index.html or elsewhere? 
+               Wait, let's check index.html for `createUser` definition.
+               I don't see `createUser` in index.html in the previous view. 
+               It might be missing or I missed it.
+               However, I'm copying the HTML form which calls `createUser(event)`.
+               I should convert the logic from the existing codebase if it was inline or global.
+            */
+
+            // Since there was no inline script in data_modal.html for createUser, 
+            // it must be defined in index.html or another included script.
+            // I will implement the fetch logic here to be safe and self-contained, 
+            // or I'll rely on the existing one if I can find it.
+
+            // Re-implementing basic fetch based on common patterns in this app
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('/api/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ username, email, password, full_name: nome, role: perfil })
+            });
+
+            if (response.ok) {
+                resultEl.textContent = "Usuário criado com sucesso!";
+                document.getElementById('createUserForm').reset();
+                loadUsers();
+            } else {
+                const err = await response.json();
+                resultEl.textContent = "Erro: " + (err.detail || "Falha ao criar");
+            }
+
+        } catch (e) {
+            console.error(e);
+            resultEl.textContent = "Erro de conexão.";
+        }
+    }
+
+    async function loadUsers() {
+        const tbody = document.getElementById('usersListBody');
+        tbody.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
+
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('/api/users', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (response.ok) {
+                const users = await response.json();
+                tbody.innerHTML = '';
+                users.forEach(u => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid #eee';
+                    tr.innerHTML = `
+                        <td style="padding:5px;">${u.id}</td>
+                        <td style="padding:5px;">${u.username}</td>
+                        <td style="padding:5px;">${u.role}</td>
+                        <td style="padding:5px;">${u.is_active ? 'Sim' : 'Não'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4">Erro ao carregar usuários.</td></tr>';
+            }
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="4">Erro de conexão.</td></tr>';
+        }
+    }
+</script>

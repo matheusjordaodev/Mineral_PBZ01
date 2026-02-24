@@ -1,0 +1,161 @@
+<!-- Reusable Contextual Registration Modal -->
+<div id="quickRegModal" class="modal-overlay" style="z-index: 3000;">
+    <div class="modal-card" style="width: 400px; max-width: 90%;">
+        <div class="modal-header" style="background: #0f8bb3; color: white;">
+            <h3 class="modal-title" id="quickRegTitle" style="color: white;">Novo Cadastro</h3>
+            <button onclick="closeQuickReg()"
+                style="background: transparent; border: none; color: white; font-size: 20px; cursor: pointer;">&times;</button>
+        </div>
+        <div class="modal-body">
+
+            <!-- Base Form -->
+            <form id="quickFormBase" onsubmit="handleQuickReg(event, 'base')" style="display:none;">
+                <label style="display:block; margin-bottom:6px; font-size:13px;">Nome da Base *</label>
+                <input type="text" id="quickBaseNome" required placeholder="Ex: Marina Porto"
+                    style="width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid #ccc;">
+                <button type="submit"
+                    style="width:100%; padding:10px; background:#0f8bb3; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Salvar
+                    Base</button>
+            </form>
+
+            <!-- Embarcacao Form -->
+            <form id="quickFormEmb" onsubmit="handleQuickReg(event, 'emb')" style="display:none;">
+                <label style="display:block; margin-bottom:6px; font-size:13px;">Nome da Embarcação *</label>
+                <input type="text" id="quickEmbNome" required placeholder="Ex: Azulão II"
+                    style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+                <label style="display:block; margin-bottom:6px; font-size:13px;">Marinheiro Responsável</label>
+                <input type="text" id="quickEmbMarinheiro" placeholder="Ex: Capitão Gancho"
+                    style="width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid #ccc;">
+
+                <button type="submit"
+                    style="width:100%; padding:10px; background:#0f8bb3; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Salvar
+                    Embarcação</button>
+            </form>
+
+            <!-- Equipe Form -->
+            <form id="quickFormEquipe" onsubmit="handleQuickReg(event, 'equipe')" style="display:none;">
+                <label style="display:block; margin-bottom:6px; font-size:13px;">Nome Completo *</label>
+                <input type="text" id="quickEquipeNome" required placeholder="Ex: Maria Souza"
+                    style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+                <label style="display:block; margin-bottom:6px; font-size:13px;">Função</label>
+                <input type="text" id="quickEquipeFuncao" placeholder="Ex: Mergulhadora"
+                    style="width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid #ccc;">
+
+                <button type="submit"
+                    style="width:100%; padding:10px; background:#0f8bb3; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Salvar
+                    Membro</button>
+            </form>
+
+            <div id="quickRegError" style="color: red; font-size: 12px; margin-top: 10px; display: none;"></div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    let quickRegType = '';
+
+    function openQuickReg(type) {
+        quickRegType = type;
+        document.getElementById('quickRegModal').style.display = 'flex';
+        document.getElementById('quickFormBase').style.display = 'none';
+        document.getElementById('quickFormEmb').style.display = 'none';
+        document.getElementById('quickFormEquipe').style.display = 'none';
+        document.getElementById('quickRegError').style.display = 'none';
+
+        if (type === 'base') {
+            document.getElementById('quickRegTitle').textContent = 'Nova Base de Apoio';
+            document.getElementById('quickFormBase').style.display = 'block';
+            document.getElementById('quickBaseNome').value = '';
+        } else if (type === 'emb') {
+            document.getElementById('quickRegTitle').textContent = 'Nova Embarcação';
+            document.getElementById('quickFormEmb').style.display = 'block';
+            document.getElementById('quickEmbNome').value = '';
+            document.getElementById('quickEmbMarinheiro').value = '';
+        } else if (type === 'equipe') {
+            document.getElementById('quickRegTitle').textContent = 'Novo Membro da Equipe';
+            document.getElementById('quickFormEquipe').style.display = 'block';
+            document.getElementById('quickEquipeNome').value = '';
+            document.getElementById('quickEquipeFuncao').value = '';
+        }
+    }
+
+    function closeQuickReg() {
+        document.getElementById('quickRegModal').style.display = 'none';
+    }
+
+    async function handleQuickReg(event, type) {
+        event.preventDefault();
+        const errorEl = document.getElementById('quickRegError');
+        errorEl.style.display = 'none';
+
+        let url = '';
+        let body = {};
+
+        if (type === 'base') {
+            url = '/api/bases-apoio';
+            body = { nome: document.getElementById('quickBaseNome').value };
+        } else if (type === 'emb') {
+            url = '/api/embarcacoes';
+            body = {
+                nome: document.getElementById('quickEmbNome').value,
+                marinheiro_responsavel: document.getElementById('quickEmbMarinheiro').value
+            };
+        } else if (type === 'equipe') {
+            url = '/api/equipe';
+            body = {
+                nome_completo: document.getElementById('quickEquipeNome').value,
+                funcao: document.getElementById('quickEquipeFuncao').value
+            };
+        }
+
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Success - refresh lists and select the new item
+                await refreshDataLists(type, data.id);
+                closeQuickReg();
+            } else {
+                throw new Error('Erro ao salvar');
+            }
+        } catch (e) {
+            errorEl.textContent = e.message;
+            errorEl.style.display = 'block';
+        }
+    }
+
+    async function refreshDataLists(type, newId) {
+        // This function should trigger the refresh of the selects in the main modal
+        // and select the newId.
+        if (typeof loadBases === 'function') await loadBases();
+        if (typeof loadEmbarcacoes === 'function') await loadEmbarcacoes();
+        if (typeof loadEquipe === 'function') await loadEquipe();
+
+        // Auto select
+        if (type === 'base' && document.getElementById('campanhaBase')) {
+            document.getElementById('campanhaBase').value = newId;
+        } else if (type === 'emb' && document.getElementById('campanhaEmbarcacao')) {
+            document.getElementById('campanhaEmbarcacao').value = newId;
+        } else if (type === 'equipe') {
+            // For checkbox list, find the input and check it
+            const checkbox = document.querySelector(`input[name="equipe_member"][value="${newId}"]`);
+            if (checkbox) {
+                checkbox.checked = true;
+                // Scroll to it?
+                checkbox.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+    }
+</script>
