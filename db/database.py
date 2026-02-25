@@ -3,7 +3,8 @@ Database Configuration and Connection
 """
 
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
@@ -36,8 +37,10 @@ if not DATABASE_URL:
         encoded_pass = urllib.parse.quote_plus(db_pass)
         DATABASE_URL = f"postgresql://{db_user}:{encoded_pass}@{db_host}:{db_port}/{db_name}"
     else:
-        # Fallback to local development
-        DATABASE_URL = "postgresql://pmascc_user:pmascc_pass@localhost:5432/pmascc_db"
+        
+        #DATABASE_URL = "postgresql://pmascc_user:pmascc_pass@localhost:5432/pmascc_db"
+        DATABASE_URL="postgresql://pbz01:Mineral%232026@pbz01.postgres.database.azure.com:5432/postgres"
+
 
 # Create engine
 engine = create_engine(
@@ -71,6 +74,15 @@ def init_db():
     """
     Initialize database - create all tables if they don't exist
     """
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+    except SQLAlchemyError as exc:
+        raise RuntimeError(
+            "PostGIS extension is required. Enable it in the target database "
+            "before starting the app (example: CREATE EXTENSION postgis;)."
+        ) from exc
+
     from db.models import Base
     Base.metadata.create_all(bind=engine)
     print("✓ Database tables created successfully")

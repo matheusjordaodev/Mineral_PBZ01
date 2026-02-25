@@ -17,7 +17,6 @@
             <button id="tabMedia" class="data-tab" onclick="switchDataTab('media')" style="display:none;">4. Upload
                 Mídia</button>
             <button id="tabLista" class="data-tab" onclick="switchDataTab('lista')">5. Campanhas</button>
-            <button id="tabVisualizar" class="data-tab" onclick="switchDataTab('visualizar')">6. Visualizar</button>
 
             <!-- Tabs 8, 9, 10 REMOVED -->
             <button id="tabQuestionario" class="data-tab" onclick="switchDataTab('questionario')">11.
@@ -192,36 +191,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Tab 6: Visualizar -->
-            <div id="contentVisualizar" class="tab-content" style="display:none;">
-                <div class="mock-section">
-                    <h4>Visualizar Campanha</h4>
-                    <div id="visualizarInfo" style="margin-bottom:15px; color:#c5d8e3; font-size:13px;">
-                        Selecione uma campanha na aba 5 para visualizar
-                    </div>
-
-                    <div id="visualizarControls" style="display:none;">
-                        <div style="display:flex; gap:10px; margin-bottom:15px;">
-                            <button onclick="showCampanhaOnMap()"
-                                style="flex:1; padding:8px; border:1px solid #2ec1f1; background:rgba(46,193,241,0.2); color:#e5f2f7; border-radius:4px; cursor:pointer;">
-                                🌍 Mostrar no Mapa
-                            </button>
-                            <button onclick="clearCampanhaMap()"
-                                style="padding:8px; border:1px solid #f00; background:rgba(255,0,0,0.2); color:#e5f2f7; border-radius:4px; cursor:pointer;">
-                                Limpar
-                            </button>
-                        </div>
-
-                        <h5>Galeria de Mídia</h5>
-                        <div id="mediaGallery"
-                            style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; max-height:200px; overflow-y:auto; padding:5px;">
-                            <!-- Media items will differ here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Users Tab Content Removed (Moved to separate modal) -->
             <!-- Note: Tabs 8, 9, 10 for Base/Embarcacao/Equipe removed from modal body -->
 
@@ -232,6 +201,10 @@
 
                     <!-- Step 1: Select Campaign -->
                     <div id="qStep1">
+                        <div id="qSelectedIlhaInfo"
+                            style="margin-bottom:8px; padding:8px 10px; border-radius:8px; border:1px solid #d5e5f1; background:#edf7ff; color:#214b66; font-size:12px; font-weight:700;">
+                            Ilha selecionada: -
+                        </div>
                         <label style="display:block; margin-bottom:6px; font-size:13px;">Selecione a Campanha</label>
                         <select id="qCampanhaSelect" onchange="onQuestionarioCampanhaSelected()"
                             style="width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333;">
@@ -317,6 +290,9 @@
                                         style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
                                     <label style="font-size:12px;">Dados Meteorológicos (Upload Imagem)</label>
                                     <input type="file" id="buscaMeteoFile" accept="image/*"
+                                        style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
+                                    <label style="font-size:12px;">Imagens da Busca Ativa (Max 5)</label>
+                                    <input type="file" id="buscaImagensFile" accept="image/*" multiple
                                         style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
                                 </div>
 
@@ -565,7 +541,7 @@
 
         <div style="margin-bottom:15px;">
             <label style="display:block; margin-bottom:5px; font-size:12px;">Imagens (Max 5)</label>
-            <input type="file" id="buscaImagensFile" accept="image/*" multiple
+            <input type="file" id="coralImagensFile" accept="image/*" multiple
                 style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
         </div>
 
@@ -577,3 +553,4 @@
         </div>
     </div>
 </div>
+

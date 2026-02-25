@@ -487,20 +487,21 @@
         }
 
         .ilha-selection-summary {
-            position: sticky;
-            top: 0;
-            z-index: 2;
+            position: static;
             display: flex;
             gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 8px;
-            padding: 7px 10px;
+            flex-wrap: nowrap;
+            align-items: center;
+            overflow-x: auto;
+            margin-bottom: 6px;
+            padding: 6px 10px;
             background: #edf7ff;
             border: 1px solid #cfe4f4;
             border-radius: 8px;
             font-size: 11px;
             color: #214b66;
             font-weight: 700;
+            white-space: nowrap;
         }
 
         .ilha-master-detail {
@@ -541,6 +542,130 @@
             background: #fdfefe;
             padding: 10px;
             min-height: 120px;
+        }
+
+        .method-selection-banner {
+            margin-bottom: 8px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #cfe4f4;
+            background: #edf7ff;
+            color: #214b66;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .method-selection-banner.empty {
+            background: #fff8e8;
+            border-color: #efd8a6;
+            color: #7b5f28;
+        }
+
+        .point-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid #d5e5f1;
+            background: #edf5fb;
+            color: #335d78;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .method-picker-card {
+            width: min(420px, 94vw);
+            background: #ffffff;
+            border: 1px solid #c9dde9;
+            border-radius: 14px;
+            box-shadow: 0 14px 32px rgba(5, 33, 51, 0.35);
+            padding: 16px;
+            color: #1f3f56;
+        }
+
+        .method-picker-title {
+            margin: 0 0 6px 0;
+            font-size: 17px;
+            color: #0f3d56;
+        }
+
+        .method-picker-subtitle {
+            margin: 0;
+            font-size: 13px;
+            color: #55758a;
+            line-height: 1.45;
+        }
+
+        .method-picker-options {
+            display: grid;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .method-picker-option {
+            width: 100%;
+            border: 1px solid #c8ddec;
+            border-radius: 10px;
+            background: #f7fbff;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+            color: #204761;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .15s ease, border-color .15s ease, transform .15s ease;
+        }
+
+        .method-picker-option:hover,
+        .method-picker-option:focus-visible {
+            background: #eaf6ff;
+            border-color: #90c3de;
+            transform: translateY(-1px);
+            outline: none;
+        }
+
+        .method-picker-option small {
+            display: block;
+            margin-top: 2px;
+            font-size: 11px;
+            color: #5b788d;
+            font-weight: 500;
+        }
+
+        .method-picker-number {
+            width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            background: #0f8bb3;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .method-picker-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 14px;
+        }
+
+        .method-picker-cancel {
+            border: 1px solid #c1d2df;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #2f5872;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .method-picker-cancel:hover {
+            background: #f2f8fc;
         }
 
         /* Caixa da medicao */
@@ -875,6 +1000,30 @@
     {% include "components/user_management_modal.html" %}
     {% include "components/registration_modal.html" %}
     {% include "components/campaign_details_modal.html" %}
+    <div class="modal-overlay" id="methodPickerModal" role="dialog" aria-modal="true" aria-hidden="true"
+        aria-labelledby="methodPickerTitle">
+        <div class="method-picker-card">
+            <h3 class="method-picker-title" id="methodPickerTitle">Selecionar metodo</h3>
+            <p class="method-picker-subtitle">Escolha qual metodologia deve ser aplicada para esta ilha.</p>
+            <div class="method-picker-options">
+                <button type="button" class="method-picker-option" data-method-value="1">
+                    <span class="method-picker-number">1</span>
+                    <span>Busca Ativa<small>Seleciona apenas estacoes BA.</small></span>
+                </button>
+                <button type="button" class="method-picker-option" data-method-value="2">
+                    <span class="method-picker-number">2</span>
+                    <span>Video Transecto<small>Seleciona estacoes VT/FQ.</small></span>
+                </button>
+                <button type="button" class="method-picker-option" data-method-value="3">
+                    <span class="method-picker-number">3</span>
+                    <span>Foto Quadrado<small>Seleciona estacoes VT/FQ.</small></span>
+                </button>
+            </div>
+            <div class="method-picker-footer">
+                <button type="button" class="method-picker-cancel" id="methodPickerCancelBtn">Cancelar</button>
+            </div>
+        </div>
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
@@ -917,13 +1066,16 @@
             'documentos': { title: 'Documentos', html: '<div id="docsList"><div style="color:#c5d8e3;">Carregando...</div></div>' },
             'imagens': { title: 'Galeria de Imagens', html: '<div id="galeriaLoading" style="color:#c5d8e3;">Carregando imagens...</div><div id="galeriaContainer" style="display:none; max-height:400px; overflow-y:auto; padding-right:5px;"></div>' },
             'campanha': { title: 'Filtro por Campanha', html: '<div class="mock-filters"><label>Campanha</label><select id="filterCampanhaSelect"><option value="">Carregando...</option></select></div><div style="margin-top:10px;"><button onclick="applyCampanhaFilter()" style="padding:6px 12px; background:#0f8bb3; color:#fff; border:none; border-radius:4px; cursor:pointer;">Filtrar</button></div>' },
-            'ilha': { title: 'Filtro por Ilha', html: '<div class="mock-filters"><label>Ilha</label><select><option>Ilha Vitória</option><option>Ilha Anchieta</option></select></div><div style="margin-top:10px;"><button style="padding:6px 12px; background:#0f8bb3; color:#fff; border:none; border-radius:4px;">Filtrar</button></div>' },
+            'ilha': { title: 'Filtro por Ilha', html: '<div class="mock-filters"><label>Ilha</label><select id="filterIlhaSelect"><option value="">Carregando...</option></select></div><div style="margin-top:10px;"><button onclick="applyIlhaFilter()" style="padding:6px 12px; background:#0f8bb3; color:#fff; border:none; border-radius:4px; cursor:pointer;">Filtrar</button></div>' },
             'metodo': { title: 'Filtro por Método', html: '<div class="mock-filters"><label>Método</label><select><option>Vídeo Transecto</option><option>Foto Quadrado</option><option>Busca Ativa</option></select></div><div style="margin-top:10px;"><button style="padding:6px 12px; background:#0f8bb3; color:#fff; border:none; border-radius:4px;">Filtrar</button></div>' }
         };
 
         // Gallery State
         var currentMediaList = [];
         var currentMediaIndex = 0;
+        var methodPickerResolver = null;
+        var campanhaMethodHints = {};
+        var isCreatingCampanha = false;
 
         var ilhas = []; // Will be fetched from API
 
@@ -1099,6 +1251,8 @@
             // Special init for Campanha Filter
             if (key === 'campanha') {
                 loadFilterCampanhas();
+            } else if (key === 'ilha') {
+                loadFilterIlhas();
             } else if (key === 'imagens') {
                 loadGaleriaImagens();
             } else if (key === 'documentos') {
@@ -1206,6 +1360,84 @@
             }
         }
 
+        async function loadFilterIlhas() {
+            const select = document.getElementById('filterIlhaSelect');
+            if (!select) return;
+
+            select.innerHTML = '<option value="">Carregando...</option>';
+
+            try {
+                if (!Array.isArray(ilhas) || ilhas.length === 0) {
+                    await fetchIlhas();
+                }
+
+                const orderedIlhas = sortIlhasByDefinedOrder(ilhas || []);
+                select.innerHTML = '<option value="">-- Selecione --</option>';
+
+                orderedIlhas.forEach(ilha => {
+                    const opt = document.createElement('option');
+                    opt.value = ilha.id;
+                    opt.textContent = ilha.nome || ('Ilha ' + ilha.id);
+                    select.appendChild(opt);
+                });
+
+                if (selectedIlhaId && Array.from(select.options).some(opt => String(opt.value) === String(selectedIlhaId))) {
+                    select.value = String(selectedIlhaId);
+                }
+            } catch (e) {
+                console.error(e);
+                select.innerHTML = '<option value="">Erro ao carregar ilhas</option>';
+            }
+        }
+
+        async function applyIlhaFilter() {
+            const select = document.getElementById('filterIlhaSelect');
+            if (!select) return;
+
+            const ilhaId = String(select.value || '');
+            if (!ilhaId) {
+                alert("Selecione uma ilha");
+                return;
+            }
+
+            if (!Array.isArray(ilhas) || ilhas.length === 0) {
+                await fetchIlhas();
+            }
+
+            const ilha = (ilhas || []).find(i => String(i.id) === ilhaId);
+            if (!ilha) {
+                alert("Ilha nao encontrada");
+                return;
+            }
+
+            selectedIlhaId = ilhaId;
+            const ilhaSelect = document.getElementById('ilhaSelect');
+            if (ilhaSelect) ilhaSelect.value = ilhaId;
+            onIlhaSelected();
+
+            if (!mapStarted) await initMap();
+
+            try {
+                if (ilha.geojson) {
+                    const geo = JSON.parse(ilha.geojson);
+                    const bounds = L.geoJSON(geo).getBounds();
+                    if (bounds && bounds.isValid()) {
+                        map.fitBounds(bounds.pad(0.15));
+                    }
+                } else if (Array.isArray(ilha.coords) && ilha.coords.length >= 2) {
+                    const lat = Number(ilha.coords[0]);
+                    const lon = Number(ilha.coords[1]);
+                    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+                        map.setView([lat, lon], Math.max(map.getZoom(), 12));
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+
+            closeMockModal();
+        }
+
         // Detail Modal
         var detailModal = document.getElementById('detailModal');
         function openDetailModal(props) {
@@ -1281,13 +1513,23 @@
                 const dados = data.dados || {};
                 const estacao = data.estacao || {};
                 const diasTxt = data.dias_desde_campanha == null ? '-' : (data.dias_desde_campanha + ' dia(s)');
+                const fmtNum = (v, dec = 2) => (v === null || v === undefined || v === '' || Number.isNaN(Number(v)))
+                    ? '-'
+                    : Number(v).toFixed(dec);
 
                 tbody.innerHTML = `
                     <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Campanha</strong></td><td style="padding:8px;">${camp.nome || '-'}</td></tr>
                     <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Data campanha</strong></td><td style="padding:8px;">${formatDateBR(camp.data)}</td></tr>
                     <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Atualizacao</strong></td><td style="padding:8px;"><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${cor}; margin-right:6px;"></span>${diasTxt}</td></tr>
                     <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Data coleta</strong></td><td style="padding:8px;">${formatDateBR(dados.data)}</td></tr>
+                    <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Metodo coleta</strong></td><td style="padding:8px;">${dados.metodo_origem || estacao.metodologia || '-'}</td></tr>
                     <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Observacoes</strong></td><td style="padding:8px;">${dados.observacoes || '-'}</td></tr>
+                    <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Prof. inicial (m)</strong></td><td style="padding:8px;">${fmtNum(dados.profundidade_inicial)}</td></tr>
+                    <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Prof. final (m)</strong></td><td style="padding:8px;">${fmtNum(dados.profundidade_final)}</td></tr>
+                    <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Temp. inicial (°C)</strong></td><td style="padding:8px;">${fmtNum(dados.temperatura_inicial)}</td></tr>
+                    <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Temp. final (°C)</strong></td><td style="padding:8px;">${fmtNum(dados.temperatura_final)}</td></tr>
+                    <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Visib. inicial (m)</strong></td><td style="padding:8px;">${fmtNum(dados.visibilidade_inicial)}</td></tr>
+                    <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Visib. final (m)</strong></td><td style="padding:8px;">${fmtNum(dados.visibilidade_final)}</td></tr>
                     <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Fotos</strong></td><td style="padding:8px;">${dados.num_fotoquadrados ?? 0}</td></tr>
                     <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Buscas ativas</strong></td><td style="padding:8px;">${dados.num_buscas_ativas ?? 0}</td></tr>
                     <tr style="border-bottom:1px solid #ddd;"><td style="padding:8px;"><strong>Video transectos</strong></td><td style="padding:8px;">${dados.num_video_transectos ?? 0}</td></tr>
@@ -1366,6 +1608,7 @@
             bindOverlayClose('registrationModal', 'closeRegistrationModal');
             bindOverlayClose('userManagementModal', 'closeUserManagementModal');
             bindOverlayClose('coralSolModal', 'closeCoralSolModal');
+            bindOverlayClose('methodPickerModal', 'cancelMethodPickerModal');
         }
 
         setupOverlayCloseHandlers();
@@ -1374,12 +1617,14 @@
         var dataModal = document.getElementById('gerenciarDadosModal');
         function openGerenciarDadosModal() {
             if (!currentUser) return;
+            if (!dataModal) return;
             dataModal.style.display = 'flex';
             dataModal.setAttribute('aria-hidden', 'false');
             if (ilhas.length === 0) fetchIlhas().catch(() => { }); // Load if empty
             switchDataTab('ilha'); // Reset to first tab
         }
         function closeGerenciarDadosModal() {
+            if (!dataModal) return;
             dataModal.style.display = 'none';
             dataModal.setAttribute('aria-hidden', 'true');
         }
@@ -1394,8 +1639,13 @@
             tabs.forEach(el => el.classList.remove('active'));
 
             // Activate selected
-            document.getElementById('content' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).style.display = 'block';
-            document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
+            const contentId = 'content' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
+            const tabId = 'tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
+            const contentEl = document.getElementById(contentId);
+            const tabEl = document.getElementById(tabId);
+            if (!contentEl || !tabEl) return;
+            contentEl.style.display = 'block';
+            tabEl.classList.add('active');
 
             // Specific loaders
             if (tabName === 'campanha') {
@@ -1408,6 +1658,11 @@
             } else if (tabName === 'lista') {
                 loadCampanhasList();
             } else if (tabName === 'questionario') {
+                const ilhaSelect = document.getElementById('ilhaSelect');
+                if (!selectedIlhaId && ilhaSelect && ilhaSelect.value) {
+                    selectedIlhaId = String(ilhaSelect.value);
+                }
+                syncQuestionarioSelectedIlhaInfo();
                 loadCampanhasForQuestionario();
             }
         }
@@ -1475,11 +1730,15 @@
                     opt.textContent = ilha.nome;
                     select.appendChild(opt);
                 });
+                if (selectedIlhaId && Array.from(select.options).some(opt => String(opt.value) === String(selectedIlhaId))) {
+                    select.value = String(selectedIlhaId);
+                }
 
                 // Check if user has admin access? (Assuming yes for simplicity of this demo)
 
                 renderIlhasOnMap();
                 loadIlhasSelectionForCampaign();
+                syncQuestionarioSelectedIlhaInfo();
                 return true;
 
             } catch (e) {
@@ -1614,21 +1873,40 @@
 
         var selectedIlhaId = null;
 
+        function syncQuestionarioSelectedIlhaInfo() {
+            const info = document.getElementById('qSelectedIlhaInfo');
+            if (!info) return;
+
+            if (!selectedIlhaId) {
+                info.textContent = 'Ilha selecionada: -';
+                return;
+            }
+
+            const ilha = (ilhas || []).find(i => String(i.id) === String(selectedIlhaId));
+            const ilhaNome = ilha?.nome || ('ID ' + selectedIlhaId);
+            info.textContent = 'Ilha selecionada: ' + ilhaNome;
+        }
+
         function onIlhaSelected() {
-            const id = document.getElementById('ilhaSelect').value;
+            const ilhaSelect = document.getElementById('ilhaSelect');
+            const ilhaInfo = document.getElementById('ilhaInfo');
+            if (!ilhaSelect || !ilhaInfo) return;
+            const id = ilhaSelect.value;
             if (!id) {
                 selectedIlhaId = null;
-                document.getElementById('ilhaInfo').textContent = "";
+                ilhaInfo.textContent = "";
+                syncQuestionarioSelectedIlhaInfo();
                 return;
             }
             selectedIlhaId = id;
+            syncQuestionarioSelectedIlhaInfo();
             const ilha = ilhas.find(i => i.id == id);
             if (ilha) {
                 const lat = Array.isArray(ilha.coords) && ilha.coords.length >= 2 ? Number(ilha.coords[0]) : null;
                 const lon = Array.isArray(ilha.coords) && ilha.coords.length >= 2 ? Number(ilha.coords[1]) : null;
                 const latTxt = Number.isFinite(lat) ? lat.toFixed(5) : '-';
                 const lonTxt = Number.isFinite(lon) ? lon.toFixed(5) : '-';
-                document.getElementById('ilhaInfo').innerHTML = `
+                ilhaInfo.innerHTML = `
                     <strong>Ilha Selecionada:</strong> ${ilha.nome}<br>
                     Coordenadas: ${latTxt}, ${lonTxt}<br>
                     <div style="margin-top: 10px; display: flex; gap: 8px;">
@@ -1639,10 +1917,17 @@
                 `;
 
                 // Enable other tabs hints
-                document.getElementById('campanhaFormInfo').style.display = 'none';
-                document.getElementById('campanhasList').innerHTML = "Carregando campanhas...";
+                const campanhaFormInfo = document.getElementById('campanhaFormInfo');
+                if (campanhaFormInfo) campanhaFormInfo.style.display = 'none';
+                const campanhasList = document.getElementById('campanhasList');
+                if (campanhasList) campanhasList.innerHTML = "Carregando campanhas...";
 
                 // Auto switch to list? Maybe not, stay on tab.
+            }
+
+            const tabQuestionario = document.getElementById('tabQuestionario');
+            if (tabQuestionario && tabQuestionario.classList.contains('active')) {
+                loadCampanhasForQuestionario();
             }
         }
 
@@ -1748,7 +2033,11 @@
                         point_number: extractPointNumberFromCode(ea.codigo)
                     };
                 });
-                nextState[String(ilha.id)] = { ativo: !!prev.ativo, espacos: espacosState };
+                nextState[String(ilha.id)] = {
+                    ativo: !!prev.ativo,
+                    methodKey: prev.methodKey || null,
+                    espacos: espacosState
+                };
             });
             campaignSelectionState = nextState;
             if (!activeCampaignIslandId && ilhas.length > 0) activeCampaignIslandId = String(ilhas[0].id);
@@ -1779,17 +2068,33 @@
             summary.innerHTML = `<span>Ilhas: ${c.ilhasCount}</span><span>Estacoes: ${c.espacosCount}</span><span>Pontos: ${c.pontosCount}</span>`;
         }
 
+        function getEspacoMethodKey(espaco) {
+            const metodologia = normalizeTextForSort(espaco?.metodologia || '');
+            if (metodologia.includes('ba') || metodologia.includes('busca')) return 'ba';
+            if (metodologia.includes('fq') || metodologia.includes('vt') || metodologia.includes('foto') || metodologia.includes('video')) return 'fqvt';
+            return null;
+        }
+
+        function isEspacoCompatibleWithMethod(espaco, methodKey) {
+            if (!methodKey) return true;
+            return getEspacoMethodKey(espaco) === methodKey;
+        }
+
+        function getMethodLabel(methodKey) {
+            if (methodKey === 'ba') return 'Busca Ativa';
+            if (methodKey === 'fqvt') return 'Foto Quadrado / Video Transecto';
+            return 'Nao definido';
+        }
+
         function setIslandMethodSelection(ilhaId, methodKey) {
             const ilha = ilhas.find(i => String(i.id) === String(ilhaId));
             const ilhaState = campaignSelectionState[String(ilhaId)];
             if (!ilha || !ilhaState) return;
 
+            ilhaState.methodKey = methodKey;
             let hasAny = false;
             (ilha.espacos_amostrais || []).forEach(ea => {
-                const metodologia = normalizeTextForSort(ea.metodologia || '');
-                const isBA = metodologia.includes('ba');
-                const isFQVT = metodologia.includes('fq') || metodologia.includes('vt');
-                const shouldSelect = methodKey === 'ba' ? isBA : isFQVT;
+                const shouldSelect = isEspacoCompatibleWithMethod(ea, methodKey);
                 ilhaState.espacos[String(ea.id)].selected = shouldSelect;
                 if (shouldSelect) hasAny = true;
             });
@@ -1800,32 +2105,101 @@
             const ilhaState = campaignSelectionState[String(ilhaId)];
             if (!ilhaState) return;
             ilhaState.ativo = false;
+            ilhaState.methodKey = null;
             Object.values(ilhaState.espacos || {}).forEach(espacoState => { espacoState.selected = false; });
         }
 
         function togglePointSelection(ilhaId, espacoId) {
-            const espacoState = campaignSelectionState[String(ilhaId)]?.espacos?.[String(espacoId)];
-            if (!espacoState) return;
-            espacoState.selected = !espacoState.selected;
             const ilhaState = campaignSelectionState[String(ilhaId)];
+            const espacoState = ilhaState?.espacos?.[String(espacoId)];
+            if (!espacoState) return;
+            const ilha = ilhas.find(i => String(i.id) === String(ilhaId));
+            const espaco = (ilha?.espacos_amostrais || []).find(ea => String(ea.id) === String(espacoId));
+            if (ilhaState?.methodKey && !isEspacoCompatibleWithMethod(espaco, ilhaState.methodKey)) return;
+            espacoState.selected = !espacoState.selected;
             if (!ilhaState) return;
             ilhaState.ativo = Object.values(ilhaState.espacos || {}).some(s => s.selected);
         }
 
-        function askMethodForIslandSelection() {
-            const answer = prompt(
-                'Selecione o metodo para esta ilha:\\n' +
-                '1 - Busca Ativa\\n' +
-                '2 - Video Transecto\\n' +
-                '3 - Foto Quadrado\\n\\n' +
-                'Digite 1, 2 ou 3.'
-            );
-            if (answer === null) return null;
-            const value = String(answer).trim();
-            if (value === '1') return 'ba';
-            if (value === '2' || value === '3') return 'fqvt';
-            alert('Opcao invalida. Use 1, 2 ou 3.');
-            return null;
+        function openMethodPickerModal() {
+            const modal = document.getElementById('methodPickerModal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden', 'false');
+            const firstOption = modal.querySelector('[data-method-value="1"]');
+            if (firstOption) firstOption.focus();
+        }
+
+        function closeMethodPickerModal() {
+            const modal = document.getElementById('methodPickerModal');
+            if (!modal) return;
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function settleMethodPicker(rawValue) {
+            const resolve = methodPickerResolver;
+            methodPickerResolver = null;
+            closeMethodPickerModal();
+            if (typeof resolve !== 'function') return;
+            if (rawValue === '1') {
+                resolve('ba');
+                return;
+            }
+            if (rawValue === '2' || rawValue === '3') {
+                resolve('fqvt');
+                return;
+            }
+            resolve(null);
+        }
+
+        function cancelMethodPickerModal() {
+            settleMethodPicker(null);
+        }
+
+        function bindMethodPickerInteractions() {
+            const modal = document.getElementById('methodPickerModal');
+            if (!modal || modal.dataset.boundMethodPicker === '1') return;
+            modal.dataset.boundMethodPicker = '1';
+
+            modal.addEventListener('click', function (e) {
+                const option = e.target.closest('[data-method-value]');
+                if (option) {
+                    e.preventDefault();
+                    settleMethodPicker(option.dataset.methodValue);
+                    return;
+                }
+                const cancelBtn = e.target.closest('#methodPickerCancelBtn');
+                if (cancelBtn) {
+                    e.preventDefault();
+                    cancelMethodPickerModal();
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (modal.style.display !== 'flex') return;
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelMethodPickerModal();
+                    return;
+                }
+                if (e.key === '1' || e.key === '2' || e.key === '3') {
+                    e.preventDefault();
+                    settleMethodPicker(e.key);
+                }
+            });
+        }
+
+        async function askMethodForIslandSelection() {
+            bindMethodPickerInteractions();
+            if (methodPickerResolver) {
+                methodPickerResolver(null);
+                methodPickerResolver = null;
+            }
+            return new Promise(resolve => {
+                methodPickerResolver = resolve;
+                openMethodPickerModal();
+            });
         }
 
         function renderCampaignIslandDetails() {
@@ -1836,22 +2210,42 @@
                 detail.innerHTML = '<div style="font-size:12px; color:#777;">Selecione uma ilha para ver os pontos.</div>';
                 return;
             }
-            const ilhaState = campaignSelectionState[String(ilha.id)] || { ativo: false, espacos: {} };
+            const ilhaState = campaignSelectionState[String(ilha.id)] || { ativo: false, methodKey: null, espacos: {} };
             const espacos = ilha.espacos_amostrais || [];
+            const methodKey = ilhaState.methodKey || null;
+            const visibleEspacos = methodKey
+                ? espacos.filter(ea => isEspacoCompatibleWithMethod(ea, methodKey))
+                : espacos;
+            const selectedVisibleCount = visibleEspacos.filter(ea => (ilhaState.espacos[String(ea.id)] || {}).selected).length;
+
+            const bannerHtml = methodKey
+                ? `<div class="method-selection-banner">
+                        <span>Metodo selecionado: ${getMethodLabel(methodKey)}</span>
+                        <span style="margin-left:8px;">Pontos a cadastrar: ${selectedVisibleCount}</span>
+                   </div>`
+                : `<div class="method-selection-banner empty">Selecione um metodo para filtrar os pontos que serao cadastrados nesta ilha.</div>`;
 
             detail.innerHTML = `
                 <div class="ilha-card-header" style="margin-bottom:10px;">
                     <span>${ilha.nome}</span>
-                    <span class="ilha-meta">${espacos.length} estacao(oes)</span>
+                    <span class="ilha-meta">${visibleEspacos.length} estacao(oes)</span>
                 </div>
                 <div class="ilha-tools">
                     <button type="button" class="ilha-tool-btn" data-action="method-ba">Selecionar BA</button>
                     <button type="button" class="ilha-tool-btn" data-action="method-fqvt">Selecionar FQ/VT</button>
                     <button type="button" class="ilha-tool-btn" data-action="clear-island">Limpar ilha</button>
                 </div>
+                ${bannerHtml}
                 <div>
-                    ${espacos.map(ea => {
+                    ${visibleEspacos.length === 0 ? `
+                        <div style="font-size:12px; color:#7c8d99; padding:8px; border:1px dashed #d5e5f1; border-radius:8px;">
+                            Nenhuma estacao encontrada para o metodo selecionado.
+                        </div>
+                    ` : visibleEspacos.map(ea => {
                         const state = ilhaState.espacos[String(ea.id)] || { selected: false };
+                        const pointNumber = Number.isFinite(Number(state.point_number))
+                            ? Number(state.point_number)
+                            : extractPointNumberFromCode(ea.codigo);
                         const latTxt = Number.isFinite(Number(ea.latitude)) ? Number(ea.latitude).toFixed(5) : '-';
                         const lonTxt = Number.isFinite(Number(ea.longitude)) ? Number(ea.longitude).toFixed(5) : '-';
                         return `
@@ -1865,6 +2259,9 @@
                                 </div>
                                 <div style="margin-left:30px; margin-top:2px; font-size:11px; color:#5b7284;">
                                     Coordenadas: ${latTxt}, ${lonTxt}
+                                </div>
+                                <div style="margin-left:30px; margin-top:4px;">
+                                    <span class="point-pill">Ponto a cadastrar: ${pointNumber}</span>
                                 </div>
                             </div>
                         `;
@@ -1911,7 +2308,7 @@
             if (!container || container.dataset.boundSelectionUX === '1') return;
             container.dataset.boundSelectionUX = '1';
 
-            container.addEventListener('click', function (e) {
+            container.addEventListener('click', async function (e) {
                 const target = e.target;
                 const actionEl = target.closest('[data-action]');
                 if (!actionEl) return;
@@ -1927,7 +2324,10 @@
                 if (action === 'toggle-island') {
                     e.stopPropagation();
                     if (actionEl.checked) {
-                        const methodKey = askMethodForIslandSelection();
+                        let methodKey = campaignSelectionState[ilhaId]?.methodKey || null;
+                        if (!methodKey) {
+                            methodKey = await askMethodForIslandSelection();
+                        }
                         if (!methodKey) {
                             actionEl.checked = false;
                             return;
@@ -1963,9 +2363,12 @@
         function buildCampanhaIlhasPayload() {
             const ilhasPayload = [];
             Object.entries(campaignSelectionState).forEach(([ilhaId, ilhaState]) => {
+                const ilha = (ilhas || []).find(i => String(i.id) === String(ilhaId));
                 const selecao = [];
                 Object.entries(ilhaState.espacos || {}).forEach(([espacoId, espacoState]) => {
                     if (espacoState.selected) {
+                        const espaco = (ilha?.espacos_amostrais || []).find(ea => String(ea.id) === String(espacoId));
+                        if (ilhaState.methodKey && !isEspacoCompatibleWithMethod(espaco, ilhaState.methodKey)) return;
                         const pontoNumero = Number.isFinite(Number(espacoState.point_number))
                             ? Number(espacoState.point_number)
                             : 1;
@@ -1979,12 +2382,80 @@
             return ilhasPayload;
         }
 
+        function inferQuestionarioMethodsFromSelection(ilhasPayload) {
+            const methods = new Set();
+            (ilhasPayload || []).forEach(ilhaSel => {
+                const ilha = (ilhas || []).find(i => String(i.id) === String(ilhaSel.ilha_id));
+                (ilhaSel.selecao || []).forEach(sel => {
+                    const espaco = (ilha?.espacos_amostrais || []).find(ea => String(ea.id) === String(sel.espaco_amostral_id));
+                    const metodologia = normalizeTextForSort(espaco?.metodologia || '');
+                    if (metodologia.includes('ba') || metodologia.includes('busca')) methods.add('busca');
+                    if (metodologia.includes('vt') || metodologia.includes('video')) methods.add('video');
+                    if (metodologia.includes('fq') || metodologia.includes('foto')) methods.add('foto');
+                });
+            });
+            if (methods.size === 0) {
+                methods.add('busca');
+                methods.add('video');
+                methods.add('foto');
+            }
+            return Array.from(methods);
+        }
+
+        async function openQuestionarioForCreatedCampaign(campanha, ilhasPayload) {
+            if (!campanha || !campanha.id) return;
+
+            const campanhaIdTxt = String(campanha.id);
+            const firstIlhaId = ilhasPayload?.[0]?.ilha_id;
+            if (firstIlhaId) {
+                selectedIlhaId = String(firstIlhaId);
+                const ilhaSelect = document.getElementById('ilhaSelect');
+                if (ilhaSelect) ilhaSelect.value = String(firstIlhaId);
+                onIlhaSelected();
+            }
+
+            const methodHints = inferQuestionarioMethodsFromSelection(ilhasPayload);
+            campanhaMethodHints[campanhaIdTxt] = methodHints;
+
+            switchDataTab('questionario');
+            await loadCampanhasForQuestionario();
+
+            const qCampanhaSelect = document.getElementById('qCampanhaSelect');
+            if (qCampanhaSelect) {
+                if (!Array.from(qCampanhaSelect.options).some(opt => String(opt.value) === campanhaIdTxt)) {
+                    const opt = document.createElement('option');
+                    opt.value = campanhaIdTxt;
+                    const nome = campanha.nome || ('Campanha ' + campanhaIdTxt);
+                    opt.textContent = campanha.data ? `${nome} (${campanha.data})` : nome;
+                    qCampanhaSelect.appendChild(opt);
+                }
+                qCampanhaSelect.value = campanhaIdTxt;
+            }
+
+            onQuestionarioCampanhaSelected();
+
+            if (methodHints.length === 1) {
+                showMethodForm(methodHints[0]);
+            }
+        }
+
         async function createCampanha(e) {
             e.preventDefault();
+            if (isCreatingCampanha) return;
             const ilhasPayload = buildCampanhaIlhasPayload();
             if (ilhasPayload.length === 0) {
                 alert("Selecione ao menos uma ilha e uma estacao (ponto amostral).");
                 return;
+            }
+
+            const submitBtn = document.querySelector('#campanhaForm button[type="submit"]');
+            const originalSubmitText = submitBtn ? submitBtn.textContent : '';
+            isCreatingCampanha = true;
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Criando campanha...';
+                submitBtn.style.opacity = '0.75';
+                submitBtn.style.cursor = 'wait';
             }
 
             const body = {
@@ -2008,11 +2479,16 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    document.getElementById('campanhaResult').textContent = "Campanha criada com sucesso! ID: " + data.campanha.id;
-                    document.getElementById('campanhaResult').style.display = 'block';
-                    document.getElementById('campanhaResult').style.background = '#d4edda';
-                    document.getElementById('campanhaResult').style.color = '#155724';
-                    document.getElementById('campanhaForm').reset();
+                    const campanhaResult = document.getElementById('campanhaResult');
+                    if (campanhaResult) {
+                        campanhaResult.textContent = "Campanha criada com sucesso! ID: " + data.campanha.id;
+                        campanhaResult.style.display = 'block';
+                        campanhaResult.style.background = '#d4edda';
+                        campanhaResult.style.color = '#155724';
+                    }
+                    const campanhaForm = document.getElementById('campanhaForm');
+                    if (campanhaForm) campanhaForm.reset();
+                    await openQuestionarioForCreatedCampaign(data.campanha, ilhasPayload);
                 } else {
                     let msg = "Erro ao criar";
                     if (data.detail) {
@@ -2027,10 +2503,21 @@
                     throw new Error(msg);
                 }
             } catch (err) {
-                document.getElementById('campanhaResult').textContent = "Erro: " + err.message;
-                document.getElementById('campanhaResult').style.display = 'block';
-                document.getElementById('campanhaResult').style.background = '#f8d7da';
-                document.getElementById('campanhaResult').style.color = '#721c24';
+                const campanhaResult = document.getElementById('campanhaResult');
+                if (campanhaResult) {
+                    campanhaResult.textContent = "Erro: " + err.message;
+                    campanhaResult.style.display = 'block';
+                    campanhaResult.style.background = '#f8d7da';
+                    campanhaResult.style.color = '#721c24';
+                }
+            } finally {
+                isCreatingCampanha = false;
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalSubmitText || 'Criar Campanha';
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                }
             }
         }
 
@@ -2054,23 +2541,10 @@
             // Simple HTML list
             let html = '<ul class="mock-list">';
             list.forEach(c => {
-                html += `<li>
-                <strong>${c.nome}</strong> (${c.data}) 
-                <button onclick="selectCampanhaVisualizar(${c.id})" style="padding:2px 6px; font-size:11px; margin-left:10px;">Visualizar</button>
-            </li>`;
+                html += `<li><strong>${c.nome}</strong> (${c.data})</li>`;
             });
             html += '</ul>';
             container.innerHTML = html;
-        }
-
-        var selectedCampanhaId = null;
-        function selectCampanhaVisualizar(id) {
-            selectedCampanhaId = id;
-            switchDataTab('visualizar');
-            document.getElementById('visualizarInfo').innerHTML = "Campanha ID #" + id + " selecionada.";
-            document.getElementById('visualizarControls').style.display = 'block';
-            // Mock load media
-            document.getElementById('mediaGallery').innerHTML = '<div class="mock-thumb"></div><div class="mock-thumb"></div>';
         }
         // --- Users Admin ---
         let selectedPasswordUserId = null;
@@ -2295,15 +2769,16 @@
         // --- Questionario Context ---
         async function loadCampanhasForQuestionario() {
             // Load all campaigns or filter? For now list recent.
+            const sel = document.getElementById('qCampanhaSelect');
+            if (!sel) return;
             if (!selectedIlhaId) {
-                document.getElementById('qCampanhaSelect').innerHTML = '<option>Selecione uma ilha na aba 1 primeiro</option>';
+                sel.innerHTML = '<option>Selecione uma ilha na aba 1 primeiro</option>';
                 return;
             }
             const res = await fetch(`/api/ilhas/${selectedIlhaId}/campanhas`, { headers: { 'Authorization': 'Bearer ' + authToken } });
             const data = await res.json();
             const list = data.campanhas || [];
 
-            const sel = document.getElementById('qCampanhaSelect');
             sel.innerHTML = '<option value="">-- Selecione --</option>';
             list.forEach(c => {
                 const opt = document.createElement('option');
@@ -2316,32 +2791,106 @@
         // Global var for Questionario Campanha ID
         let selectedQCampanhaId = null;
 
+        function renderQuestionarioMethodActions(methodHints) {
+            const qStepTitle = document.querySelector('#qStep2 h5');
+            const qGrid = document.getElementById('qStationsGrid');
+            if (!qGrid) return;
+
+            const catalog = [
+                { key: 'busca', title: 'Busca Ativa', hint: 'Registro de dados BA', color: '#2d8f4f' },
+                { key: 'video', title: 'Video Transecto', hint: 'Registro de dados VT', color: '#0f8bb3' },
+                { key: 'foto', title: 'Foto Quadrado', hint: 'Registro de dados FQ', color: '#9a5d2d' }
+            ];
+
+            const normalizedHints = Array.from(new Set((methodHints || []).map(v => String(v || '').toLowerCase())));
+            const options = normalizedHints.length > 0
+                ? catalog.filter(item => normalizedHints.includes(item.key))
+                : catalog;
+
+            if (qStepTitle) {
+                if (options.length === 1) {
+                    qStepTitle.textContent = 'Metodo da campanha: ' + options[0].title + '. Complete o formulario abaixo:';
+                } else {
+                    qStepTitle.textContent = 'Selecione o metodo para registrar dados:';
+                }
+            }
+
+            qGrid.innerHTML = options.map(item => `
+                <button type="button" onclick="showMethodForm('${item.key}')"
+                    style="padding:10px; border:1px solid ${item.color}; background:#fff; color:#1f3b4d; border-radius:8px; cursor:pointer; text-align:left;">
+                    <div style="font-size:12px; font-weight:700; color:${item.color};">${item.title}</div>
+                    <div style="font-size:10px; color:#5d7485; margin-top:2px;">${item.hint}</div>
+                </button>
+            `).join('');
+        }
+
         function onQuestionarioCampanhaSelected() {
-            const val = document.getElementById('qCampanhaSelect').value;
-            selectedQCampanhaId = val; // Store globally
+            const qCampanhaSelect = document.getElementById('qCampanhaSelect');
+            const qStep2 = document.getElementById('qStep2');
+            if (!qCampanhaSelect || !qStep2) return;
+            const val = qCampanhaSelect.value;
+            selectedQCampanhaId = val || null;
             if (val) {
-                document.getElementById('qStep2').style.display = 'block';
+                qStep2.style.display = 'block';
+                const methodHints = campanhaMethodHints[String(val)] || [];
+                renderQuestionarioMethodActions(methodHints);
                 loadMethodsSummary(val);
             } else {
-                document.getElementById('qStep2').style.display = 'none';
+                qStep2.style.display = 'none';
+                const methodsList = document.getElementById('methodsList');
+                if (methodsList) methodsList.textContent = '';
+                const qGrid = document.getElementById('qStationsGrid');
+                if (qGrid) qGrid.innerHTML = '';
+                hideMethodForm();
             }
         }
 
         function showMethodForm(type) {
-            // hide all first
-            document.getElementById('formBusca').style.display = 'none';
-            document.getElementById('formVideo').style.display = 'none';
-            document.getElementById('formFoto').style.display = 'none';
+            const formsContainer = document.getElementById('hiddenFormsContainer');
+            const formBusca = document.getElementById('formBusca');
+            const formVideo = document.getElementById('formVideo');
+            const formFoto = document.getElementById('formFoto');
+            if (!formBusca || !formVideo || !formFoto) return;
+            if (formsContainer) formsContainer.style.display = 'block';
 
-            if (type === 'busca') document.getElementById('formBusca').style.display = 'block';
-            if (type === 'video') document.getElementById('formVideo').style.display = 'block';
-            if (type === 'foto') document.getElementById('formFoto').style.display = 'block';
+            formBusca.style.display = 'none';
+            formVideo.style.display = 'none';
+            formFoto.style.display = 'none';
+
+            if (type === 'busca') formBusca.style.display = 'block';
+            if (type === 'video') formVideo.style.display = 'block';
+            if (type === 'foto') formFoto.style.display = 'block';
+
+            const formMap = {
+                busca: formBusca,
+                video: formVideo,
+                foto: formFoto
+            };
+            const activeForm = formMap[type];
+            if (activeForm && typeof activeForm.scrollIntoView === 'function') {
+                activeForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
 
         function hideMethodForm(type) {
-            if (type === 'busca') document.getElementById('formBusca').style.display = 'none';
-            if (type === 'video') document.getElementById('formVideo').style.display = 'none';
-            if (type === 'foto') document.getElementById('formFoto').style.display = 'none';
+            const formsContainer = document.getElementById('hiddenFormsContainer');
+            const formBusca = document.getElementById('formBusca');
+            const formVideo = document.getElementById('formVideo');
+            const formFoto = document.getElementById('formFoto');
+            if (!formBusca || !formVideo || !formFoto) return;
+
+            if (type === 'busca') formBusca.style.display = 'none';
+            if (type === 'video') formVideo.style.display = 'none';
+            if (type === 'foto') formFoto.style.display = 'none';
+            if (!type) {
+                formBusca.style.display = 'none';
+                formVideo.style.display = 'none';
+                formFoto.style.display = 'none';
+            }
+
+            const isAnyVisible = [formBusca, formVideo, formFoto]
+                .some(el => el.style.display === 'block');
+            if (formsContainer) formsContainer.style.display = isAnyVisible ? 'block' : 'none';
         }
 
         // Coral Sol Modal Logic
@@ -2349,27 +2898,42 @@
 
         function toggleCoralSolModal() {
             const chk = document.getElementById('buscaCoralsol');
+            const modal = document.getElementById('coralSolModal');
+            const coralImages = document.getElementById('coralImagensFile');
+            if (!chk || !modal) return;
             if (chk.checked) {
-                document.getElementById('coralSolModal').style.display = 'flex';
+                modal.style.display = 'flex';
             } else {
+                if (coralImages) coralImages.value = '';
                 coralSolDetails = null;
             }
         }
 
         function closeCoralSolModal() {
-            document.getElementById('coralSolModal').style.display = 'none';
-            document.getElementById('buscaCoralsol').checked = false;
+            const modal = document.getElementById('coralSolModal');
+            const chk = document.getElementById('buscaCoralsol');
+            const coralImages = document.getElementById('coralImagensFile');
+            if (modal) modal.style.display = 'none';
+            if (chk) chk.checked = false;
+            if (coralImages) coralImages.value = '';
             coralSolDetails = null;
         }
 
         function confirmCoralSolDetails() {
-            const dataVal = document.getElementById('coralData').value;
-            const horaVal = document.getElementById('coralHora').value;
-            const tempIni = document.getElementById('coralTempIni').value;
-            const tempFim = document.getElementById('coralTempFim').value;
-            const profIni = document.getElementById('coralProfIni').value;
-            const profFim = document.getElementById('coralProfFim').value;
-            const iar = document.getElementById('coralIAR').value;
+            const dataEl = document.getElementById('coralData');
+            const horaEl = document.getElementById('coralHora');
+            const tempIniEl = document.getElementById('coralTempIni');
+            const tempFimEl = document.getElementById('coralTempFim');
+            const profIniEl = document.getElementById('coralProfIni');
+            const profFimEl = document.getElementById('coralProfFim');
+            const iarEl = document.getElementById('coralIAR');
+            const dataVal = dataEl ? dataEl.value : '';
+            const horaVal = horaEl ? horaEl.value : '';
+            const tempIni = tempIniEl ? tempIniEl.value : '';
+            const tempFim = tempFimEl ? tempFimEl.value : '';
+            const profIni = profIniEl ? profIniEl.value : '';
+            const profFim = profFimEl ? profFimEl.value : '';
+            const iar = iarEl ? iarEl.value : '';
 
             coralSolDetails = {
                 data: dataVal,
@@ -2380,7 +2944,55 @@
                 prof_final: profFim,
                 iar: iar
             };
-            document.getElementById('coralSolModal').style.display = 'none';
+            const modal = document.getElementById('coralSolModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function getInputValue(id) {
+            const el = document.getElementById(id);
+            return el ? String(el.value || '').trim() : '';
+        }
+
+        function parseNullableNumber(value) {
+            const txt = String(value == null ? '' : value).trim();
+            if (!txt) return null;
+            const n = Number(txt);
+            return Number.isFinite(n) ? n : null;
+        }
+
+        function buildIsoDateTime(dateValue, timeValue) {
+            const d = String(dateValue || '').trim();
+            if (!d) return null;
+            const t = String(timeValue || '').trim() || '00:00:00';
+            const tWithSeconds = t.length === 5 ? (t + ':00') : t;
+            return `${d}T${tWithSeconds}`;
+        }
+
+        function addDurationToIsoDateTime(startIso, durationText) {
+            const txt = String(durationText || '').trim();
+            if (!startIso || !txt) return null;
+            const m = txt.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+            if (!m) return null;
+            const hh = Number(m[1]);
+            const mm = Number(m[2]);
+            const ss = Number(m[3] || '0');
+            if (!Number.isFinite(hh) || !Number.isFinite(mm) || !Number.isFinite(ss)) return null;
+            const start = new Date(startIso);
+            if (Number.isNaN(start.getTime())) return null;
+            const end = new Date(start.getTime() + (((hh * 60 + mm) * 60 + ss) * 1000));
+            const pad = n => String(n).padStart(2, '0');
+            const y = end.getFullYear();
+            const mo = pad(end.getMonth() + 1);
+            const d = pad(end.getDate());
+            const h = pad(end.getHours());
+            const mi = pad(end.getMinutes());
+            const se = pad(end.getSeconds());
+            return `${y}-${mo}-${d}T${h}:${mi}:${se}`;
+        }
+
+        function formatObsValue(value, suffix = '') {
+            if (value === null || value === undefined || value === '' || Number.isNaN(value)) return '-';
+            return String(value) + suffix;
         }
 
         // Upload Helper (Single)
@@ -2438,28 +3050,67 @@
         // Real Submit Handlers
         async function createBuscaAtiva(e) {
             e.preventDefault();
+            if (!selectedQCampanhaId) {
+                alert("Selecione uma campanha.");
+                return;
+            }
 
             // Uploads
             const excelUrl = await uploadMethodFile('buscaExcelFile');
             const percUrl = await uploadMethodFile('buscaPercursoFile');
-            const imagesUrls = await uploadMultipleMethodFiles('buscaImagensFile');
+            const meteoUrl = await uploadMethodFile('buscaMeteoFile');
+            const buscaImagesUrls = await uploadMultipleMethodFiles('buscaImagensFile');
+            const coralImagesUrls = await uploadMultipleMethodFiles('coralImagensFile');
 
-            // Lat Lon
-            const lat = document.getElementById('buscaLat').value ? parseFloat(document.getElementById('buscaLat').value) : null;
-            const lon = document.getElementById('buscaLon').value ? parseFloat(document.getElementById('buscaLon').value) : null;
+            // Date/Time
+            const startIso = buildIsoDateTime(getInputValue('buscaData'), getInputValue('buscaHora'));
+            const endIso = addDurationToIsoDateTime(startIso, getInputValue('buscaDuracao'));
+
+            // Numeric fields
+            const lat = parseNullableNumber(getInputValue('buscaLat'));
+            const lon = parseNullableNumber(getInputValue('buscaLon'));
+            const profIni = parseNullableNumber(getInputValue('buscaProfIni'));
+            const profFim = parseNullableNumber(getInputValue('buscaProfFin'));
+            const tempIni = parseNullableNumber(getInputValue('buscaTempIni'));
+            const tempFim = parseNullableNumber(getInputValue('buscaTempFin'));
+            const visV = parseNullableNumber(getInputValue('buscaVisV'));
+            const visH = parseNullableNumber(getInputValue('buscaVisH'));
+
+            const encontrouCoralSol = !!document.getElementById('buscaCoralsol')?.checked;
+            const coralPayload = encontrouCoralSol && coralSolDetails ? { ...coralSolDetails } : null;
+            if (coralPayload) {
+                coralPayload.imagens = coralImagesUrls || [];
+            }
+            const qtdBuscaFotos = Array.isArray(buscaImagesUrls) ? buscaImagesUrls.length : 0;
+            const qtdCoralFotos = Array.isArray(coralImagesUrls) ? coralImagesUrls.length : 0;
+            const qtdTotalFotos = qtdBuscaFotos + qtdCoralFotos;
+            const observacoesBusca = [
+                'Metodo utilizado: Busca Ativa',
+                `Quantidade de fotos: ${qtdTotalFotos} (Busca Ativa: ${qtdBuscaFotos}, Coral-sol: ${qtdCoralFotos})`,
+                `Coral-sol encontrado: ${encontrouCoralSol ? 'Sim' : 'Nao'}`,
+                `Visibilidade inicial/final (m): ${formatObsValue(visV)} / ${formatObsValue(visH)}`,
+                `Temperatura inicial/final (°C): ${formatObsValue(tempIni)} / ${formatObsValue(tempFim)}`
+            ].join(' | ');
 
             const body = {
                 campanha_id: parseInt(selectedQCampanhaId),
-                data_hora_inicio: null,
-                data_hora_fim: null,
-                encontrou_coral_sol: document.getElementById('buscaCoralsol').checked,
+                data_hora_inicio: startIso,
+                data_hora_fim: endIso,
+                encontrou_coral_sol: encontrouCoralSol,
+                profundidade_inicial: profIni,
+                profundidade_final: profFim,
+                temperatura_inicial: tempIni,
+                temperatura_final: tempFim,
+                visibilidade_vertical: visV,
+                visibilidade_horizontal: visH,
                 latitude: lat,
                 longitude: lon,
-                detalhes_coral: coralSolDetails,
-                imagens: imagesUrls,
+                detalhes_coral: coralPayload,
+                imagens: buscaImagesUrls,
                 planilha_excel_url: excelUrl,
                 arquivo_percurso_url: percUrl,
-                observacoes: "Registro criado via web"
+                dados_meteo: { imagem_meteo_url: meteoUrl },
+                observacoes: observacoesBusca
             };
 
             await saveMethod('/api/campanhas/' + selectedQCampanhaId + '/busca-ativa', body, 'busca');
@@ -2467,12 +3118,42 @@
 
         async function createVideoTransecto(e) {
             e.preventDefault();
+            if (!selectedQCampanhaId) {
+                alert("Selecione uma campanha.");
+                return;
+            }
             const videoUrl = await uploadMethodFile('videoFile');
+            const meteoUrl = await uploadMethodFile('videoMeteoFile');
+            const dataHora = buildIsoDateTime(getInputValue('videoData'), getInputValue('videoHora'));
+            const videoProfIni = parseNullableNumber(getInputValue('videoProfIni'));
+            const videoProfFim = parseNullableNumber(getInputValue('videoProfFin'));
+            const videoTempIni = parseNullableNumber(getInputValue('videoTempIni'));
+            const videoTempFim = parseNullableNumber(getInputValue('videoTempFin'));
+            const videoVisV = parseNullableNumber(getInputValue('videoVisV'));
+            const videoVisH = parseNullableNumber(getInputValue('videoVisH'));
+            const observacoesVideo = [
+                'Metodo utilizado: Video Transecto',
+                'Quantidade de fotos: 0',
+                `Visibilidade inicial/final (m): ${formatObsValue(videoVisV)} / ${formatObsValue(videoVisH)}`,
+                `Temperatura inicial/final (°C): ${formatObsValue(videoTempIni)} / ${formatObsValue(videoTempFim)}`
+            ].join(' | ');
 
             const body = {
                 campanha_id: parseInt(selectedQCampanhaId),
-                nome_video: "Video Uploaded", // Mock
-                observacoes: "Video URL: " + (videoUrl || "N/A")
+                nome_video: "Video Uploaded",
+                data_hora: dataHora,
+                video_url: videoUrl,
+                profundidade_inicial: videoProfIni,
+                profundidade_final: videoProfFim,
+                temperatura_inicial: videoTempIni,
+                temperatura_final: videoTempFim,
+                visibilidade_vertical: videoVisV,
+                visibilidade_horizontal: videoVisH,
+                riqueza_especifica: parseNullableNumber(getInputValue('videoRiqueza')),
+                diversidade_shannon: parseNullableNumber(getInputValue('videoShannon')),
+                equitabilidade_jaccard: parseNullableNumber(getInputValue('videoJaccard')),
+                dados_meteo: { imagem_meteo_url: meteoUrl },
+                observacoes: observacoesVideo
             };
             await saveMethod('/api/campanhas/' + selectedQCampanhaId + '/video-transectos', body, 'video');
         }
@@ -2500,15 +3181,40 @@
                     hideMethodForm(type);
                     loadMethodsSummary(selectedQCampanhaId);
                 } else {
-                    alert("Erro ao salvar.");
+                    const err = await res.json().catch(() => ({}));
+                    alert("Erro ao salvar: " + getErrorMessage(err, 'falha'));
                 }
             } catch (e) { console.error(e); }
         }
 
-        function loadMethodsSummary(campanhaId) {
-            document.getElementById('methodsList').textContent = "Carregando registros...";
-            // Fetch logic would go here
-            document.getElementById('methodsList').textContent = "";
+        async function loadMethodsSummary(campanhaId) {
+            const methodsList = document.getElementById('methodsList');
+            if (!methodsList) return;
+            methodsList.textContent = "Carregando registros...";
+            try {
+                const res = await fetch(`/api/campanhas/${campanhaId}/metodos`, {
+                    headers: { 'Authorization': 'Bearer ' + authToken }
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    throw new Error(getErrorMessage(data, 'falha ao carregar'));
+                }
+
+                const qtdBuscas = Array.isArray(data.buscas) ? data.buscas.length : 0;
+                const qtdVideos = Array.isArray(data.videos) ? data.videos.length : 0;
+                const qtdFotos = Array.isArray(data.fotos) ? data.fotos.length : 0;
+
+                methodsList.innerHTML = `
+                    <div style="margin-top:10px; padding:10px; border:1px solid #d5e5f1; border-radius:8px; background:#f7fbff;">
+                        <div style="font-size:12px; color:#36566f; font-weight:700; margin-bottom:4px;">Resumo da campanha selecionada</div>
+                        <div style="font-size:12px; color:#4a6a81;">Busca Ativa: ${qtdBuscas}</div>
+                        <div style="font-size:12px; color:#4a6a81;">Video Transecto: ${qtdVideos}</div>
+                        <div style="font-size:12px; color:#4a6a81;">Foto Quadrado: ${qtdFotos}</div>
+                    </div>
+                `;
+            } catch (err) {
+                methodsList.textContent = "Nao foi possivel carregar o resumo dos registros.";
+            }
         }
         // Galeria de Imagens Logic
         async function loadGaleriaImagens() {

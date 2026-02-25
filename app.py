@@ -23,7 +23,7 @@ app.include_router(export.router)
 async def startup_event():
     import time
     from db.database import SessionLocal, init_db, engine
-    from db.seeds import seed_admin, seed_ilhas, seed_cadastros
+    from db.seeds import seed_admin, seed_ilhas, seed_cadastros, seed_espacos_amostrais
     from sqlalchemy.exc import OperationalError
 
     # Wait for database to be ready (retry up to 5 times)
@@ -44,6 +44,7 @@ async def startup_event():
     db = SessionLocal()
     try:
         seed_ilhas(db)
+        seed_espacos_amostrais(db)
         seed_admin(db)
         seed_cadastros(db)
     finally:
@@ -51,7 +52,11 @@ async def startup_event():
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    response = templates.TemplateResponse("index.html", {"request": request})
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 if __name__ == "__main__":
     import uvicorn

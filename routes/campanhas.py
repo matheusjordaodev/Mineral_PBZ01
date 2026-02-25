@@ -13,9 +13,10 @@ from urllib.parse import quote
 from services import CampanhaService, FileService
 from db.database import get_db
 from db.models import Ilha, Campanha, EspacoAmostral, EstacaoAmostral
-from db.seeds import seed_ilhas
+from db.seeds import seed_ilhas, seed_espacos_amostrais
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
+from sqlalchemy.exc import IntegrityError
 from geoalchemy2.shape import to_shape
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from services.azure_blob_service import AzureBlobService
@@ -202,6 +203,7 @@ async def get_ilhas(db: Session = Depends(get_db)):
     """Retorna lista de todas as ilhas com status da última campanha E espaços amostrais"""
     # Auto-seed if empty
     seed_ilhas(db)
+    seed_espacos_amostrais(db)
     
     ilhas = db.query(Ilha).all()
     result = []
@@ -303,9 +305,147 @@ async def get_estacao_ultima_campanha(estacao_id: int, db: Session = Depends(get
     recency_color, days_since_campaign = classify_campaign_recency(campanha.data_campanha if campanha else None)
     media_urls = collect_station_media_urls(ultima)
 
-    num_fotos = len([f for f in (ultima.fotoquadrados or []) if not f.deleted_at])
-    num_buscas = len([b for b in (ultima.buscas_ativas or []) if not b.deleted_at])
-    num_videos = len([v for v in (ultima.video_transectos or []) if not v.deleted_at])
+    fotoquadrados_validos = [f for f in (ultima.fotoquadrados or []) if not f.deleted_at]
+    buscas_validas = [b for b in (ultima.buscas_ativas or []) if not b.deleted_at]
+    videos_validos = [v for v in (ultima.video_transectos or []) if not v.deleted_at]
+
+    # Fotos exibidas no resumo devem considerar todas as fontes (FQ + Busca + Coral-sol/DAFOR)
+    fotos_fq = len(fotoquadrados_validos)
+    fotos_busca = sum(len(b.imagens or []) for b in buscas_validas)
+    fotos_dafor = 0
+    for busca in buscas_validas:
+        fotos_dafor += sum(len((p.imagens or [])) for p in (busca.protocolos_dafor or []) if not p.deleted_at)
+    num_fotos = fotos_fq + fotos_busca + fotos_dafor
+
+    num_buscas = len(buscas_validas)
+    num_videos = len(videos_validos)
+
+    # Observacoes da estacao podem estar vazias; priorizar ultima observacao de metodo (Busca -> Video -> FQ)
+    latest_busca = max(buscas_validas, key=lambda x: x.id, default=None)
+    latest_video = max(videos_validos, key=lambda x: x.id, default=None)
+    latest_foto = max(fotoquadrados_validos, key=lambda x: x.id, default=None)
+
+    def _num(v):
+        try:
+            return float(v) if v is not None else None
+        except Exception:
+            return None
+
+    def _clean_obs(value):
+        if value is None:
+            return None
+        text = str(value).strip()
+        if not text:
+            return None
+        if text.lower() in {
+            "registro criado via web",
+            "registro criado automaticamente",
+            "registro automatico",
+        }:
+            return None
+        return text
+
+    def _fmt_summary_value(value):
+        if value is None:
+            return None
+        try:
+            raw = f"{float(value):.2f}"
+        except Exception:
+            return None
+        if raw.endswith(".00"):
+            return raw[:-3]
+        if raw.endswith("0"):
+            return raw[:-1]
+        return raw
+
+    observacoes_busca = None
+    if latest_busca and isinstance(latest_busca.dados_meteo, dict):
+        observacoes_busca = latest_busca.dados_meteo.get("observacoes")
+    observacoes_video = None
+    if latest_video and isinstance(latest_video.dados_meteo, dict):
+        observacoes_video = latest_video.dados_meteo.get("observacoes")
+    observacoes_foto = None
+    if latest_foto and isinstance(latest_foto.dados_meteo, dict):
+        observacoes_foto = latest_foto.dados_meteo.get("observacoes")
+
+    base_observacao = (
+        _clean_obs(ultima.observacoes)
+        or _clean_obs(observacoes_busca)
+        or _clean_obs(observacoes_video)
+        or _clean_obs(observacoes_foto)
+    )
+
+    # Prioriza Busca Ativa; se nao houver, usa Video; por ultimo Foto
+    metodo_origem = None
+    prof_ini = None
+    prof_fim = None
+    temp_ini = None
+    temp_fim = None
+    vis_ini = None
+    vis_fim = None
+
+    if latest_busca:
+        metodo_origem = "Busca Ativa"
+        prof_ini = _num(latest_busca.profundidade_inicial)
+        prof_fim = _num(latest_busca.profundidade_final)
+        temp_ini = _num(latest_busca.temperatura_inicial)
+        temp_fim = _num(latest_busca.temperatura_final)
+        vis_ini = _num(latest_busca.visibilidade_vertical)
+        vis_fim = _num(latest_busca.visibilidade_horizontal)
+    elif latest_video:
+        metodo_origem = "Video Transecto"
+        prof_ini = _num(latest_video.profundidade_inicial)
+        prof_fim = _num(latest_video.profundidade_final)
+        temp_ini = _num(latest_video.temperatura_inicial)
+        temp_fim = _num(latest_video.temperatura_final)
+        vis_ini = _num(latest_video.visibilidade_vertical)
+        vis_fim = _num(latest_video.visibilidade_horizontal)
+    elif latest_foto:
+        metodo_origem = "Foto Quadrado"
+        prof_ini = _num(latest_foto.profundidade)
+        prof_fim = None
+        temp_ini = _num(latest_foto.temperatura)
+        temp_fim = None
+        vis_ini = _num(latest_foto.visibilidade_vertical)
+        vis_fim = _num(latest_foto.visibilidade_horizontal)
+
+    num_coral_sol = 0
+    for busca in buscas_validas:
+        num_coral_sol += len([p for p in (busca.protocolos_dafor or []) if not p.deleted_at])
+
+    resumo_partes = []
+    if metodo_origem:
+        resumo_partes.append(f"Metodo: {metodo_origem}")
+    if prof_ini is not None or prof_fim is not None:
+        if prof_ini is not None and prof_fim is not None:
+            resumo_partes.append(f"Profundidade (m): {_fmt_summary_value(prof_ini)} a {_fmt_summary_value(prof_fim)}")
+        elif prof_ini is not None:
+            resumo_partes.append(f"Profundidade inicial (m): {_fmt_summary_value(prof_ini)}")
+        else:
+            resumo_partes.append(f"Profundidade final (m): {_fmt_summary_value(prof_fim)}")
+    if temp_ini is not None or temp_fim is not None:
+        if temp_ini is not None and temp_fim is not None:
+            resumo_partes.append(f"Temperatura (C): {_fmt_summary_value(temp_ini)} a {_fmt_summary_value(temp_fim)}")
+        elif temp_ini is not None:
+            resumo_partes.append(f"Temperatura inicial (C): {_fmt_summary_value(temp_ini)}")
+        else:
+            resumo_partes.append(f"Temperatura final (C): {_fmt_summary_value(temp_fim)}")
+    if vis_ini is not None or vis_fim is not None:
+        if vis_ini is not None and vis_fim is not None:
+            resumo_partes.append(f"Visibilidade (m): {_fmt_summary_value(vis_ini)} a {_fmt_summary_value(vis_fim)}")
+        elif vis_ini is not None:
+            resumo_partes.append(f"Visibilidade inicial (m): {_fmt_summary_value(vis_ini)}")
+        else:
+            resumo_partes.append(f"Visibilidade final (m): {_fmt_summary_value(vis_fim)}")
+    resumo_partes.append(f"Fotos: {num_fotos}")
+    resumo_partes.append(f"Busca ativa: {'sim' if num_buscas > 0 else 'nao'}")
+    resumo_partes.append(f"Coral-sol: {'sim' if num_coral_sol > 0 else 'nao'}")
+    resumo_tecnico = " | ".join(resumo_partes) if resumo_partes else None
+
+    if base_observacao and resumo_tecnico:
+        observacoes_resumo = f"{base_observacao} | {resumo_tecnico}"
+    else:
+        observacoes_resumo = base_observacao or resumo_tecnico
 
     if not media_urls and campanha:
         island_candidates = []
@@ -348,7 +488,16 @@ async def get_estacao_ultima_campanha(estacao_id: int, db: Session = Depends(get
         "dados": {
             "data": ultima.data.isoformat() if ultima.data else None,
             "hora": str(ultima.hora) if ultima.hora else None,
-            "observacoes": ultima.observacoes,
+            "observacoes": observacoes_resumo,
+            "metodo_origem": metodo_origem,
+            "profundidade_inicial": prof_ini,
+            "profundidade_final": prof_fim,
+            "temperatura_inicial": temp_ini,
+            "temperatura_final": temp_fim,
+            "visibilidade_inicial": vis_ini,
+            "visibilidade_final": vis_fim,
+            "num_coral_sol": num_coral_sol,
+            "resumo_tecnico": resumo_tecnico,
             "num_fotoquadrados": num_fotos,
             "num_buscas_ativas": num_buscas,
             "num_video_transectos": num_videos,
@@ -424,12 +573,18 @@ async def create_campanha(campanha: CampanhaCreate, db: Session = Depends(get_db
         
         # Use first ilha as 'primary' for legacy column if needed, or None
         primary_ilha_id = ilha_ids[0]
+        base_codigo = f"CAMP-{campanha.nome[:3].upper()}-{campanha.data.replace('-','')}"
+        codigo = base_codigo
+        codigo_seq = 1
+        while db.query(Campanha.id).filter(Campanha.codigo == codigo).first():
+            codigo_seq += 1
+            codigo = f"{base_codigo}-{codigo_seq}"
         
         new_campanha = Campanha(
             ilha_id=primary_ilha_id, # Legacy/Primary
             nome=campanha.nome,
             data_campanha=campanha.data,
-            codigo=f"CAMP-{campanha.nome[:3].upper()}-{campanha.data.replace('-','')}",
+            codigo=codigo,
             descricao=campanha.descricao,
             base_apoio_id=campanha.base_apoio_id,
             embarcacao_id=campanha.embarcacao_id
@@ -444,8 +599,7 @@ async def create_campanha(campanha: CampanhaCreate, db: Session = Depends(get_db
             new_campanha.equipe = equipe
 
         db.add(new_campanha)
-        db.commit() # Commit to get ID
-        db.refresh(new_campanha)
+        db.flush()  # Generate ID without final commit
 
         # 2. Create EstacaoAmostral (Sample Points) based on selection
         from db.models import EstacaoAmostral
@@ -463,8 +617,6 @@ async def create_campanha(campanha: CampanhaCreate, db: Session = Depends(get_db
                         )
                         db.add(new_estacao)
         
-        db.commit()
-
         # 3. Create Folder Structure for EACH Island
         folder_name = f"{new_campanha.id}_{new_campanha.codigo}"
         
@@ -476,8 +628,17 @@ async def create_campanha(campanha: CampanhaCreate, db: Session = Depends(get_db
                 descricao=campanha.descricao,
                 custom_id=folder_name
             )
+
+        db.commit()
+        db.refresh(new_campanha)
         
         return JSONResponse(content={"success": True, "campanha": new_campanha.to_dict()})
+    except HTTPException:
+        db.rollback()
+        raise
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Conflito de dados ao criar campanha. Tente novamente.")
     except Exception as e:
         db.rollback()
         print(f"Error creating campanha: {e}")

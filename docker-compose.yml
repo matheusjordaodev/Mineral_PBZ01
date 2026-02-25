@@ -13,4 +13,4 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://testedb:%40Ma24179512@teste-mineral.postgres.database.azure.com:5432/postgres
+      DATABASE_URL: postgresql://pbz01:Mineral%232026@pbz01.postgres.database.azure.com:5432/postgres
