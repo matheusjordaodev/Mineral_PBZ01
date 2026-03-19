@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Relatorio KML/KMZ</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f1e8;
+      --panel: #fffdf8;
+      --border: #d4c6ab;
+      --text: #2d2419;
+      --muted: #786754;
+      --ok: #2f6b3c;
+      --bad: #9f2d2d;
+      --accent: #9a6b2f;
+    }
+    body {
+      margin: 0;
+      padding: 32px;
+      background: radial-gradient(circle at top, #fff8ea 0%, var(--bg) 55%);
+      color: var(--text);
+      font-family: "Segoe UI", Tahoma, sans-serif;
+    }
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: grid;
+      gap: 20px;
+    }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px 24px;
+      box-shadow: 0 14px 40px rgba(63, 43, 15, 0.08);
+    }
+    h1, h2 {
+      margin-top: 0;
+    }
+    .status {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+    .status.valid {
+      background: rgba(47, 107, 60, 0.14);
+      color: var(--ok);
+    }
+    .status.invalid {
+      background: rgba(159, 45, 45, 0.14);
+      color: var(--bad);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      padding: 14px;
+      border-radius: 14px;
+      background: #fff9ef;
+      border: 1px solid #ead9bb;
+    }
+    .label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.84rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+    pre {
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #221c14;
+      color: #efe4d2;
+      padding: 16px;
+      border-radius: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid #ead9bb;
+      padding: 12px 10px;
+    }
+    ul {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section>
+      <h1>Relatorio de validacao KML/KMZ</h1>
+      <p class="status valid">VALIDO</p>
+      <div class="grid">
+        <div class="card">
+          <span class="label">Arquivo</span>
+          <strong>C:\mineral\Mineral_PBZ01\test_sample.kmz</strong>
+        </div>
+        <div class="card">
+          <span class="label">Tipo</span>
+          <strong>.kmz</strong>
+        </div>
+        <div class="card">
+          <span class="label">KML Interno</span>
+          <strong>test_sample.kml</strong>
+        </div>
+        <div class="card">
+          <span class="label">Gerado Em</span>
+          <strong>2026-03-17T14:53:20.130751+00:00</strong>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Resumo</h2>
+      <div class="grid">
+        <div class="card">
+          <span class="label">Documento</span>
+          <strong>Test KML</strong>
+        </div>
+        <div class="card">
+          <span class="label">Namespace</span>
+          <strong>http://www.opengis.net/kml/2.2</strong>
+        </div>
+        <div class="card">
+          <span class="label">Placemarks</span>
+          <strong>2</strong>
+        </div>
+        <div class="card">
+          <span class="label">Features validas</span>
+          <strong>2</strong>
+        </div>
+      </div>
+      <p>Sem descricao</p>
+    </section>
+
+    <section>
+      <h2>Erros</h2>
+      <p>Nenhum erro encontrado.</p>
+    </section>
+
+    <section>
+      <h2>Avisos</h2>
+      <p>Nenhum aviso encontrado.</p>
+    </section>
+
+    <section>
+      <h2>Placemarks</h2>
+      <table><thead><tr><th>Placemark</th><th>Geometria</th><th>Valido</th><th>Observacoes</th></tr></thead><tbody><tr><td>Test Point 1</td><td>Point</td><td>Sim</td><td>Sem observacoes</td></tr><tr><td>Test Point 2</td><td>Point</td><td>Sim</td><td>Sem observacoes</td></tr></tbody></table>
+    </section>
+
+    <section>
+      <h2>Arquivos Gerados</h2>
+      <ul><li><strong>geojson:</strong> C:\mineral\Mineral_PBZ01\tmp_kml_output\test_sample.geojson</li><li><strong>html_report:</strong> C:\mineral\Mineral_PBZ01\tmp_kml_output\test_sample_relatorio.html</li></ul>
+    </section>
+
+    <section>
+      <h2>GeoJSON</h2>
+      <pre>{
+  &quot;type&quot;: &quot;FeatureCollection&quot;,
+  &quot;features&quot;: [
+    {
+      &quot;type&quot;: &quot;Feature&quot;,
+      &quot;geometry&quot;: {
+        &quot;type&quot;: &quot;Point&quot;,
+        &quot;coordinates&quot;: [
+          -122.0822035425683,
+          37.42228990140251
+        ]
+      },
+      &quot;properties&quot;: {
+        &quot;name&quot;: &quot;Test Point 1&quot;,
+        &quot;description&quot;: &quot;&quot;
+      }
+    },
+    {
+      &quot;type&quot;: &quot;Feature&quot;,
+      &quot;geometry&quot;: {
+        &quot;type&quot;: &quot;Point&quot;,
+        &quot;coordinates&quot;: [
+          -122.0822035425683,
+          37.42228990140251
+        ]
+      },
+      &quot;properties&quot;: {
+        &quot;name&quot;: &quot;Test Point 2&quot;,
+        &quot;description&quot;: &quot;&quot;
+      }
+    }
+  ],
+  &quot;metadata&quot;: {
+    &quot;document_name&quot;: &quot;Test KML&quot;,
+    &quot;description&quot;: null,
+    &quot;namespace&quot;: &quot;http://www.opengis.net/kml/2.2&quot;,
+    &quot;placemark_count&quot;: 2,
+    &quot;valid_feature_count&quot;: 2
+  }
+}</pre>
+    </section>
+  </main>
+</body>
+</html>

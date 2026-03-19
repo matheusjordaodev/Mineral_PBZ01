@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>transecto_iqg04_ba.kmz</name>
+	<Schema name="transecto_iqg04_ba" id="S_transecto_iqg04_ba_I">
+		<SimpleField type="int" name="Id"><displayName>&lt;b&gt;Id&lt;/b&gt;</displayName>
+</SimpleField>
+	</Schema>
+	<Style id="style4">
+		<BalloonStyle>
+			<text><![CDATA[<table border="0">
+  <tr><td><b>Id</b></td><td>$[transecto_iqg04_ba/Id]</td></tr>
+</table>
+]]></text>
+		</BalloonStyle>
+		<PolyStyle>
+			<color>ffffff00</color>
+		</PolyStyle>
+	</Style>
+	<Folder id="layer 0">
+		<name>transecto_iqg04_ba</name>
+		<visibility>0</visibility>
+		<Placemark>
+			<name>0</name>
+			<visibility>0</visibility>
+			<styleUrl>#style4</styleUrl>
+			<Style id="inline">
+				<IconStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</IconStyle>
+				<LineStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</LineStyle>
+				<PolyStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</PolyStyle>
+			</Style>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_transecto_iqg04_ba_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<LineString>
+				<coordinates>
+					-46.67754322170887,-24.49185564491128,0 -46.67753209841288,-24.49183760382817,0 -46.67753038989096,-24.49182555313869,0 -46.67752556390167,-24.49181379843417,0 -46.67751673867718,-24.49179737077858,0 -46.67751287239835,-24.49177624072397,0 -46.67751336742101,-24.49176121628958,0 -46.67750176289607,-24.49174466696826,0 -46.67749780633499,-24.49172965701358,0 -46.67748960427728,-24.49172373311065,0 -46.67747900000018,-24.49170899999998,0 -46.67746573911527,-24.49170235875889,0 -46.67744210678747,-24.49168758190037,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>0</name>
+			<visibility>0</visibility>
+			<styleUrl>#style4</styleUrl>
+			<Style id="inline">
+				<IconStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</IconStyle>
+				<LineStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</LineStyle>
+				<PolyStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</PolyStyle>
+			</Style>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_transecto_iqg04_ba_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<LineString>
+				<coordinates>
+					-46.67746390383556,-24.49187654304388,0 -46.67748013444316,-24.49188955818067,0 -46.67749863810616,-24.49189369776988,0 -46.67750194465845,-24.49189359277213,0 -46.67751024724611,-24.49188912801515,0 -46.67751862748099,-24.49188127076633,0 -46.6775277474226,-24.49187997495642,0 -46.67753951720357,-24.49188163591285,0 -46.67754614576445,-24.49188932640669,0 -46.67755154844343,-24.49190300293668,0 -46.67756535267963,-24.49191373347452,0 -46.67757059563628,-24.49191611604676,0 -46.67757987698417,-24.49191652564423,0 -46.67758936583579,-24.49191080002434,0 -46.67759800000015,-24.491898,0 -46.67761130847787,-24.49188979687849,0 -46.67762438371057,-24.49187526425337,0 -46.67763625357338,-24.49183756152769,0 -46.67762408656398,-24.4918194370865,0 -46.67761501454446,-24.49180946806717,0 -46.67761420401005,-24.49180877884129,0 -46.67759820745655,-24.49180160432861,0 -46.67758927782005,-24.49180344162682,0 -46.67757891615785,-24.49180952916965,0 -46.6775742199809,-24.49183168788558,0 -46.67756784640537,-24.49184470686279,0 -46.67756587585663,-24.49185148097041,0 -46.6775626843835,-24.49185689160451,0 -46.67755226725478,-24.49185879907065,0 -46.67754322170887,-24.49185564491128,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>0</name>
+			<visibility>0</visibility>
+			<styleUrl>#style4</styleUrl>
+			<Style id="inline">
+				<IconStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</IconStyle>
+				<LineStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</LineStyle>
+				<PolyStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</PolyStyle>
+			</Style>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_transecto_iqg04_ba_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<LineString>
+				<coordinates>
+					-46.67746390383558,-24.49187654304388,0 -46.67744108456167,-24.49185289801409,0 -46.67742223594217,-24.49184165360391,0 -46.67740531701792,-24.49184542501821,0 -46.67738084070003,-24.49185145886643,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>0</name>
+			<visibility>0</visibility>
+			<styleUrl>#style4</styleUrl>
+			<Style id="inline">
+				<IconStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</IconStyle>
+				<LineStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</LineStyle>
+				<PolyStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</PolyStyle>
+			</Style>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_transecto_iqg04_ba_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<LineString>
+				<coordinates>
+					-46.67738100000017,-24.49185199999997,0 -46.67736397624288,-24.49182856428641,0 -46.67736844906977,-24.49182134769611,0 -46.67737160886224,-24.49181354845114,0 -46.67737151379692,-24.49180638260736,0 -46.67736945314191,-24.49179864135846,0 -46.67735822501742,-24.49178861298763,0 -46.67735158855113,-24.49178032533086,0 -46.6773501566876,-24.49177078537118,0 -46.67734928231616,-24.4917540723182,0 -46.67734845547699,-24.49174094218708,0 -46.67734823366174,-24.4917242218846,0 -46.67734613340006,-24.49171349486682,0 -46.67734010988453,-24.49170221419155,0 -46.67733342589295,-24.49169034361159,0 -46.67732606558183,-24.49167668881953,0 -46.6773226522908,-24.49166537914613,0 -46.67731574649294,-24.49163678826217,0 -46.67730181310708,-24.49161962303861,0 -46.67730098627458,-24.49160649290669,0 -46.67730217255879,-24.49159752110313,0 -46.67730079615382,-24.49159216121825,0 -46.67728957597547,-24.49158272999441,0 -46.67726931509096,-24.49158056610049,0 -46.67725103563576,-24.49158017191808,0 -46.67724123147119,-24.49157908634439,0 -46.67722611973385,-24.49157149006996,0 -46.67721620467204,-24.4915620443426,0 -46.67720636882412,-24.49155857015171,0 -46.67719718553138,-24.49155508871141,0 -46.67718994406076,-24.49155039121712,0 -46.67718900634469,-24.49152890093168,0 -46.67719467338507,-24.49151330969686,0 -46.67719909076367,-24.49150191303531,0 -46.67720350022037,-24.49148991921997,0 -46.67720458353535,-24.49147318441826,0 -46.67720374879365,-24.49145945713123,0 -46.67720098807464,-24.4914481402052,0 -46.67719618256137,-24.491430276334,0 -46.6771947348729,-24.49141954206414,0 -46.677188695544,-24.49140706707342,0 -46.67718279087455,-24.49140474369593,0 -46.67717192398209,-24.49139877466059,0 -46.67717548687796,-24.49138962714926,0 -46.67717677194587,-24.49137502443438,0 -46.67718100000018,-24.49136399999998,0 -46.6771880524792,-24.4913625239655,0 -46.677207776046,-24.49135370459289,0 -46.67723148584213,-24.49133050713619,0 -46.67724688096884,-24.49131026879945,0 -46.67725710636134,-24.49129391023634,0 -46.67727357091348,-24.49127557119098,0 -46.67728150931026,-24.49126588637927,0 -46.67729943222549,-24.4912571277579,0 -46.67730731583725,-24.49125508416287,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>0</name>
+			<visibility>0</visibility>
+			<styleUrl>#style4</styleUrl>
+			<Style id="inline">
+				<IconStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</IconStyle>
+				<LineStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</LineStyle>
+				<PolyStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</PolyStyle>
+			</Style>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_transecto_iqg04_ba_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<LineString>
+				<coordinates>
+					-46.67744210678747,-24.49168758190037,0 -46.67741905972867,-24.49166947149318,0 -46.67739119366528,-24.4916669837104,0 -46.67735359276037,-24.49164949502258,0 -46.67733685248888,-24.49164064886875,0 -46.67732336470607,-24.49164744072399,0 -46.67731991754849,-24.4916540569659,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>0</name>
+			<visibility>0</visibility>
+			<styleUrl>#style4</styleUrl>
+			<Style id="inline">
+				<IconStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</IconStyle>
+				<LineStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</LineStyle>
+				<PolyStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</PolyStyle>
+			</Style>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_transecto_iqg04_ba_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<LineString>
+				<coordinates>
+					-46.67736382081467,-24.49179376923078,0 -46.67735086780085,-24.49179388674202,0 -46.67732734727132,-24.49179199796635,0 -46.67730687345488,-24.49178362513106,0 -46.67729415426167,-24.49176943262765,0 -46.67728933228171,-24.49176016922428,0 -46.67728833057603,-24.49174369648179,0 -46.67729520706737,-24.49173071967147,0 -46.6773036591966,-24.49171844204725,0 -46.67730509224413,-24.49170839246738,0 -46.67730494014641,-24.49169692711681,0 -46.67730319339776,-24.49168332941101,0 -46.67729836191477,-24.49167334942327,0 -46.67729030310761,-24.49165623838701,0 -46.67728232985629,-24.49164557660992,0 -46.67727837650192,-24.4916427537667,0 -46.67726426230018,-24.49164147717713,0 -46.67726348873177,-24.4916411839134,0 -46.67725800000016,-24.49164499999998,0 -46.67723588506805,-24.49165490407237,0 -46.67718338870881,-24.49164661995014,0 -46.67717000000015,-24.49164899999997,0 -46.67714797516356,-24.49165575588239,0 -46.67712400000016,-24.49165399999999,0 -46.67710185815321,-24.49165825804779,0 -46.6770988329508,-24.49165481295134,0 -46.67710214911316,-24.49163814337428,0 -46.67710753071197,-24.49162379641238,0 -46.67710407782815,-24.49161567601808,0 -46.67710207029097,-24.49161145521693,0 -46.67710505647128,-24.4916004635258,0 -46.67710769536004,-24.49159848692072,0 -46.67711828841508,-24.49158446205555,0 -46.67712965119605,-24.49157351489978,0 -46.67713271985938,-24.49155705246347,0 -46.67713477303995,-24.49154618218505,0 -46.67713309188619,-24.49153924157241,0 -46.67711200000017,-24.49153499999993,0 -46.67710532302568,-24.49152915764734,0 -46.67710547403786,-24.49152390545146,0 -46.67711300000013,-24.49150299999999,0 -46.67711800000018,-24.49147700000001,0 -46.67712700000016,-24.49146599999994,0 -46.67712868129967,-24.49145849925166,0 -46.67713313828705,-24.49145008836049,0 -46.67713500000016,-24.49143999999999,0 -46.67713314128385,-24.49141676604661,0 -46.67713523435535,-24.49141432467832,0 -46.67715936853426,-24.49140703025208,0 -46.67717192398209,-24.49139877466059,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>0</name>
+			<visibility>0</visibility>
+			<styleUrl>#style4</styleUrl>
+			<Style id="inline">
+				<IconStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</IconStyle>
+				<LineStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</LineStyle>
+				<PolyStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</PolyStyle>
+			</Style>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_transecto_iqg04_ba_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<LineString>
+				<coordinates>
+					-46.67722687330336,-24.49157286063348,0 -46.67723560400189,-24.49155502029216,0 -46.67723800000018,-24.49152399999996,0 -46.67725500000017,-24.49150799999996,0 -46.67727700000017,-24.49151299999999,0 -46.67727900000018,-24.49150199999996,0 -46.67728800000015,-24.49147199999998,0 -46.67731000000015,-24.491458,0 -46.67730600000015,-24.49144999999998,0 -46.67728200000017,-24.49143899999999,0 -46.67726300000017,-24.49142699999999,0 -46.67724094402447,-24.49142331386548,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>0</name>
+			<visibility>0</visibility>
+			<styleUrl>#style4</styleUrl>
+			<Style id="inline">
+				<IconStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</IconStyle>
+				<LineStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</LineStyle>
+				<PolyStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</PolyStyle>
+			</Style>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_transecto_iqg04_ba_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<LineString>
+				<coordinates>
+					-46.67724094402447,-24.49142331386548,0 -46.67722300000016,-24.49140599999999,0 -46.67723022810475,-24.4913831228758,0 -46.67725986699366,-24.49137432647057,0 -46.67728300000019,-24.49139299999996,0 -46.67732500000017,-24.49141299999997,0 -46.67734000000015,-24.491435,0 -46.67733000000016,-24.49145399999997,0 -46.67731000000015,-24.491458,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>0</name>
+			<visibility>0</visibility>
+			<styleUrl>#style4</styleUrl>
+			<Style id="inline">
+				<IconStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</IconStyle>
+				<LineStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</LineStyle>
+				<PolyStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</PolyStyle>
+			</Style>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_transecto_iqg04_ba_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<LineString>
+				<coordinates>
+					-46.67754972570015,-24.4915122034609,0 -46.67754670217894,-24.49151885520759,0 -46.6775435626996,-24.4915355889807,0 -46.6775443420193,-24.49154513618836,0 -46.67755693862705,-24.49155992727444,0 -46.67757123936684,-24.49155558769296,0 -46.67757715197269,-24.49155850820808,0 -46.67757919678935,-24.49156505514669,0 -46.67758653335056,-24.49157691846466,0 -46.67760575059134,-24.49159880288527,0 -46.67759998059896,-24.49160663113616,0 -46.67759160038656,-24.49161448838851,0 -46.67758579870042,-24.49161992802453,0 -46.67757800000017,-24.49163799999997,0 -46.67755800000014,-24.49164899999997,0 -46.6775360000002,-24.49163799999997,0 -46.67753447886636,-24.49163622534396,0 -46.67752671880291,-24.49163526555677,0 -46.67752000000019,-24.49164399999998,0 -46.67752100000018,-24.49165499999995,0 -46.67753200000019,-24.49167499999999,0 -46.67753900000019,-24.49168899999999,0 -46.67752200000018,-24.49172099999998,0 -46.67753100000019,-24.491742,0 -46.67751336742097,-24.4917612162896,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>0</name>
+			<visibility>0</visibility>
+			<styleUrl>#style4</styleUrl>
+			<Style id="inline">
+				<IconStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</IconStyle>
+				<LineStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</LineStyle>
+				<PolyStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</PolyStyle>
+			</Style>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_transecto_iqg04_ba_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<LineString>
+				<coordinates>
+					-46.67762238552046,-24.49145255022617,0 -46.67761388540234,-24.4914357015349,0 -46.67761383030336,-24.49143548697472,0 -46.67761169199479,-24.49142189362393,0 -46.67760723301632,-24.49141047612762,0 -46.6775997463649,-24.49140697586068,0 -46.67758956652607,-24.49140708896649,0 -46.6775849299381,-24.4914117989671,0 -46.6775834541308,-24.49141862391908,0 -46.67758237936323,-24.49142616110518,0 -46.67758169137414,-24.49143333564894,0 -46.67757634778047,-24.49144378702444,0 -46.67757130064329,-24.49144706820627,0 -46.67756861220775,-24.49145103987129,0 -46.67756755170041,-24.49145965193381,0 -46.67756805732274,-24.49146824659573,0 -46.67756735982528,-24.49147470455508,0 -46.67756198295271,-24.49148264788499,0 -46.67755770937122,-24.49148520378179,0 -46.67755145435842,-24.49148598996826,0 -46.67754300000018,-24.49148499999995,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>0</name>
+			<visibility>0</visibility>
+			<styleUrl>#style4</styleUrl>
+			<Style id="inline">
+				<IconStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</IconStyle>
+				<LineStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</LineStyle>
+				<PolyStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</PolyStyle>
+			</Style>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_transecto_iqg04_ba_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<LineString>
+				<coordinates>
+					-46.6769000000002,-24.49166499999998,0 -46.67691680933495,-24.49167501407997,0 -46.67695096168323,-24.49167381194074,0 -46.67697679777901,-24.49165345766487,0 -46.67700137434615,-24.49161687239886,0 -46.67702497017484,-24.49158507595638,0 -46.67704776268732,-24.49157144458207,0 -46.67708330947,-24.49156994443382,0 -46.67709300000016,-24.49157199999996,0 -46.67711828841508,-24.49158446205555,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>0</name>
+			<visibility>0</visibility>
+			<styleUrl>#style4</styleUrl>
+			<Style id="inline">
+				<IconStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</IconStyle>
+				<LineStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</LineStyle>
+				<PolyStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</PolyStyle>
+			</Style>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_transecto_iqg04_ba_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<LineString>
+				<coordinates>
+					-46.67730731583725,-24.49125508416287,0 -46.67733454841647,-24.49125832579177,0 -46.67734600000016,-24.49125499999997,0 -46.67736100000017,-24.49127799999999,0 -46.67735500000015,-24.49128699999998,0 -46.67736500000018,-24.49133199999996,0 -46.67737000000017,-24.49134199999997,0 -46.67737800000018,-24.49135999999999,0 -46.67737100000016,-24.49138699999998,0 -46.67737300000016,-24.49139299999996,0 -46.67732500000017,-24.49141299999997,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>0</name>
+			<visibility>0</visibility>
+			<styleUrl>#style4</styleUrl>
+			<Style id="inline">
+				<IconStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</IconStyle>
+				<LineStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</LineStyle>
+				<PolyStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</PolyStyle>
+			</Style>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_transecto_iqg04_ba_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<LineString>
+				<coordinates>
+					-46.67724564403381,-24.49165053356427,0 -46.67724430678746,-24.4916389375566,0 -46.67724655475127,-24.49162742895928,0 -46.67724288054319,-24.49162232669679,0 -46.67723287239838,-24.49161648506789,0 -46.67722702081468,-24.49161724072396,0 -46.67721000000017,-24.49161399999998,0 -46.67720138591202,-24.49160507099984,0 -46.67719400000018,-24.49159000000001,0 -46.67719100000019,-24.49158,0 -46.67717926451928,-24.4915710777778,0 -46.67715700000016,-24.49156099999999,0 -46.67715441033555,-24.49155575621628,0 -46.6771536726713,-24.49153161141988,0 -46.67715232863628,-24.49151633335489,0 -46.67715409630737,-24.49150382630705,0 -46.67715364678609,-24.49149895481576,0 -46.67714900000016,-24.49148299999997,0 -46.67715232752073,-24.49147914878522,0 -46.67715569181028,-24.49147158142097,0 -46.67716341156721,-24.49146313428649,0 -46.67717102617268,-24.49145555486609,0 -46.67717358693546,-24.49144055712847,0 -46.67715420888931,-24.49143358942953,0 -46.67713500000016,-24.49143999999999,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>0</name>
+			<visibility>0</visibility>
+			<styleUrl>#style4</styleUrl>
+			<Style id="inline">
+				<IconStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</IconStyle>
+				<LineStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</LineStyle>
+				<PolyStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</PolyStyle>
+			</Style>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_transecto_iqg04_ba_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<LineString>
+				<coordinates>
+					-46.67762238552046,-24.49145255022617,0 -46.67761749954767,-24.49145720723978,0 -46.67761470226259,-24.49146119999999,0 -46.67761381538477,-24.49146889864247,0 -46.67760849954767,-24.49147692760178,0 -46.67761158009068,-24.49148517013566,0 -46.67760506862396,-24.49150094356458,0 -46.67759504165456,-24.49151148967769,0 -46.67758200000017,-24.49152599999997,0 -46.67757384070083,-24.49152701462176,0 -46.67756300000016,-24.49151999999997,0 -46.67754953888909,-24.49151213235288,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>0</name>
+			<visibility>0</visibility>
+			<styleUrl>#style4</styleUrl>
+			<Style id="inline">
+				<IconStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</IconStyle>
+				<LineStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</LineStyle>
+				<PolyStyle>
+					<color>ffffffff</color>
+					<colorMode>normal</colorMode>
+				</PolyStyle>
+			</Style>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_transecto_iqg04_ba_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<LineString>
+				<coordinates>
+					-46.67747900000018,-24.49170899999998,0 -46.67747400000019,-24.49168899999999,0 -46.67745816404166,-24.49166225048479,0 -46.67745500000017,-24.49162199999998,0 -46.67748600000016,-24.49161199999997,0 -46.67748500000015,-24.49158999999997,0 -46.67747900000018,-24.49156499999998,0 -46.67748934778628,-24.49155942811529,0 -46.67749096862143,-24.49155610913933,0 -46.67748115425218,-24.49153811612905,0 -46.67748046654177,-24.49153547857122,0 -46.67749575089195,-24.49151839606237,0 -46.67749580922396,-24.49151545591502,0 -46.67748249161116,-24.49149818690238,0 -46.67748209507414,-24.49149101920097,0 -46.67749279941477,-24.4914757602887,0 -46.67750000000018,-24.49146899999997,0 -46.67750451685927,-24.49145394380352,0 -46.67750954890698,-24.49145058886847,0 -46.67752083500338,-24.49145564172589,0 -46.67754300000018,-24.49148499999998,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<atom:link rel="app" href="https://www.google.com/earth/about/versions/#earth-pro" title="Google Earth Pro 7.3.6.10441"></atom:link>
+	</Folder>
+</Document>
+</kml>

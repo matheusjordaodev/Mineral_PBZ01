@@ -17,13 +17,15 @@ load_dotenv()
 
 app = FastAPI(title=os.getenv("APP_NAME", "PMASCC WebGIS"))
 
-# CORS (para facilitar testes locais)
+# CORS: origens permitidas via env var ALLOWED_ORIGINS (separadas por vírgula)
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "")
+_allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_allowed_origins if _allowed_origins else ["http://localhost:8080", "http://localhost:8001"],
+    allow_credentials=bool(_allowed_origins),
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # Servir arquivos estáticos (HTML / CSS / JS / imagens)

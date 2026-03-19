@@ -5,7 +5,12 @@ from jose import jwt
 from passlib.context import CryptContext
 
 # Configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-it-in-production")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY não configurada. "
+        "Adicione SECRET_KEY=<string-aleatoria-segura> ao arquivo .env"
+    )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 

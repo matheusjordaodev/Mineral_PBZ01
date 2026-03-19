@@ -1,35 +1,132 @@
 <!-- Data Management Modal -->
 <div class="modal-overlay" id="gerenciarDadosModal" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal-card" style="width: 700px; max-width: 95%;">
-        <div
-            style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #123247; padding-bottom:10px; margin-bottom:15px;">
-            <h3 class="modal-title" style="margin:0;">Gerenciamento de Dados por Ilha</h3>
-            <button onclick="closeGerenciarDadosModal()"
-                style="background:transparent; border:none; color:#333; font-size:20px; cursor:pointer;">&times;</button>
+        <div class="data-modal-header">
+            <h3 class="modal-title" style="margin:0;">Registro de Dados de Campo</h3>
+            <button class="data-modal-close" onclick="closeGerenciarDadosModal()">&times;</button>
         </div>
 
         <!-- Tabs -->
-        <div style="display:flex; gap:5px; margin-bottom:15px; border-bottom:1px solid #123247; overflow-x: auto;">
-            <button id="tabIlha" class="data-tab active" onclick="switchDataTab('ilha')">1. Selecionar Ilha</button>
-            <button id="tabCampanha" class="data-tab" onclick="switchDataTab('campanha')">2. Nova Campanha</button>
-            <button id="tabGeo" class="data-tab" onclick="switchDataTab('geo')" style="display:none;">3. Upload
-                Geo</button>
-            <button id="tabMedia" class="data-tab" onclick="switchDataTab('media')" style="display:none;">4. Upload
-                Mídia</button>
-            <button id="tabLista" class="data-tab" onclick="switchDataTab('lista')">5. Campanhas</button>
+        <div class="data-modal-tabs" style="display:none;">
+            <button id="tabInicio" class="data-tab active" onclick="switchDataTab('inicio')">Início</button>
+            <button id="tabIlha" class="data-tab" onclick="switchDataTab('ilha')">Selecionar Ilha</button>
+            <button id="tabEstacoes" class="data-tab" onclick="switchDataTab('estacoes')">Estações</button>
+            <button id="tabCampanha" class="data-tab" onclick="switchDataTab('campanha')">Nova Campanha</button>
+            <button id="tabQuestionario" class="data-tab" onclick="switchDataTab('questionario')">Método</button>
+            <button id="tabLote" class="data-tab" onclick="switchDataTab('lote')">Envio em lote</button>
+            <button id="tabGeo" class="data-tab" onclick="switchDataTab('geo')">Upload KML</button>
+            <button id="tabMedia" class="data-tab" onclick="switchDataTab('media')">Upload Imagens</button>
+            <button id="tabLista" class="data-tab" onclick="switchDataTab('lista')">Campanhas</button>
+        </div>
 
-            <!-- Tabs 8, 9, 10 REMOVED -->
-            <button id="tabQuestionario" class="data-tab" onclick="switchDataTab('questionario')">11.
-                Método utilizado</button>
-            <button id="tabEstacoes" class="data-tab" onclick="switchDataTab('estacoes')">12.
-                Estações</button>
+        <div id="dataFlowShell" style="padding:14px 16px 0;">
+            <div id="dataFlowSummary"
+                style="margin-bottom:12px; padding:12px; border:1px solid #d7e6ef; border-radius:12px; background:#f8fcff;">
+                <div
+                    style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap; margin-bottom:10px;">
+                    <div>
+                        <div id="dataFlowTitle"
+                            style="font-size:14px; font-weight:700; color:#0f4f67; margin-bottom:4px;">Escolha o fluxo de trabalho</div>
+                        <div id="dataFlowHint" style="font-size:12px; color:#557083;">Selecione uma acao para iniciar o cadastro.</div>
+                    </div>
+                    <button type="button" onclick="switchDataTab('inicio')"
+                        style="padding:7px 12px; border:1px solid #c7d8e6; border-radius:8px; background:#fff; color:#36566f; cursor:pointer;">Voltar ao inicio</button>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <div id="dataSummaryIlha"
+                        style="padding:6px 10px; border-radius:999px; background:#edf7ff; color:#214b66; font-size:11px; font-weight:700;">Ilha: -</div>
+                    <div id="dataSummaryCampanha"
+                        style="padding:6px 10px; border-radius:999px; background:#f4f8fb; color:#4d6778; font-size:11px; font-weight:700;">Campanha: -</div>
+                    <div id="dataSummaryEstacao"
+                        style="padding:6px 10px; border-radius:999px; background:#f4f8fb; color:#4d6778; font-size:11px; font-weight:700;">Estacao: -</div>
+                    <div id="dataSummaryModo"
+                        style="padding:6px 10px; border-radius:999px; background:#f4f8fb; color:#4d6778; font-size:11px; font-weight:700;">Modo: -</div>
+                    <div id="dataSummaryEtapa"
+                        style="padding:6px 10px; border-radius:999px; background:#f4f8fb; color:#4d6778; font-size:11px; font-weight:700;">Etapa: Inicio</div>
+                </div>
+            </div>
+
+            <div id="dataFlowActionBar" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+                <button id="dataActionNewCampaign" type="button" onclick="startDataFlow('new_campaign')"
+                    style="padding:8px 12px; border:1px solid #0f8bb3; border-radius:8px; background:#edf8fd; color:#155574; font-size:12px; font-weight:700; cursor:pointer;">Nova campanha</button>
+                <button id="dataActionQuestionario" type="button" onclick="startDataFlow('questionario')"
+                    style="padding:8px 12px; border:1px solid #c7d8e6; border-radius:8px; background:#fff; color:#36566f; font-size:12px; font-weight:700; cursor:pointer;">Lancamento individual</button>
+                <button id="dataActionLote" type="button" onclick="startDataFlow('lote')"
+                    style="padding:8px 12px; border:1px solid #c7d8e6; border-radius:8px; background:#fff; color:#36566f; font-size:12px; font-weight:700; cursor:pointer;">Envio em lote</button>
+                <button id="dataActionEstacoes" type="button" onclick="startDataFlow('estacoes')"
+                    style="padding:8px 12px; border:1px solid #c7d8e6; border-radius:8px; background:#fff; color:#36566f; font-size:12px; font-weight:700; cursor:pointer;">Gerenciar estacoes</button>
+                <button id="dataActionLista" type="button" onclick="startDataFlow('lista')"
+                    style="padding:8px 12px; border:1px solid #c7d8e6; border-radius:8px; background:#fff; color:#36566f; font-size:12px; font-weight:700; cursor:pointer;">Ver campanhas</button>
+            </div>
+
+            <div id="dataFlowStepBar" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+                <button id="dataStepInicio" type="button" onclick="switchDataTab('inicio')"
+                    style="padding:6px 10px; border:1px solid #c7d8e6; border-radius:999px; background:#fff; color:#36566f; font-size:11px; cursor:pointer;">Inicio</button>
+                <button id="dataStepIlha" type="button" onclick="switchDataTab('ilha')"
+                    style="padding:6px 10px; border:1px solid #c7d8e6; border-radius:999px; background:#fff; color:#36566f; font-size:11px; cursor:pointer;">Ilha</button>
+                <button id="dataStepCampanha" type="button" onclick="switchDataTab('campanha')"
+                    style="padding:6px 10px; border:1px solid #c7d8e6; border-radius:999px; background:#fff; color:#36566f; font-size:11px; cursor:pointer;">Campanha</button>
+                <button id="dataStepQuestionario" type="button" onclick="switchDataTab('questionario')"
+                    style="padding:6px 10px; border:1px solid #c7d8e6; border-radius:999px; background:#fff; color:#36566f; font-size:11px; cursor:pointer;">Individual</button>
+                <button id="dataStepLote" type="button" onclick="switchDataTab('lote')"
+                    style="padding:6px 10px; border:1px solid #c7d8e6; border-radius:999px; background:#fff; color:#36566f; font-size:11px; cursor:pointer;">Lote</button>
+                <button id="dataStepEstacoes" type="button" onclick="switchDataTab('estacoes')"
+                    style="padding:6px 10px; border:1px solid #c7d8e6; border-radius:999px; background:#fff; color:#36566f; font-size:11px; cursor:pointer;">Estacoes</button>
+            </div>
         </div>
 
         <!-- Tab Content -->
         <div class="modal-body" style="min-height:300px;">
 
+            <div id="contentInicio" class="tab-content">
+                <div class="mock-section">
+                    <h4 style="margin:0 0 4px 0;">O que deseja fazer?</h4>
+                    <p style="font-size:11px; color:#7a93a3; margin:0 0 14px 0;">Selecione o fluxo de cadastro de campo.</p>
+
+                    <!-- Fluxos principais -->
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:10px; margin-bottom:18px;">
+                        <button type="button" onclick="startDataFlow('new_campaign')"
+                            style="padding:16px 14px; border:2px solid #0f8bb3; border-radius:12px; background:#edf8fd; color:#0b3f57; text-align:left; cursor:pointer; transition:box-shadow .15s;">
+                            <div style="font-size:20px; margin-bottom:6px;">📋</div>
+                            <div style="font-size:13px; font-weight:700; margin-bottom:4px;">Nova Campanha</div>
+                            <div style="font-size:11px; color:#4d6778; line-height:1.4;">Cria um novo MASC selecionando ilhas e pontos amostrais.</div>
+                        </button>
+                        <button type="button" onclick="startDataFlow('questionario')"
+                            style="padding:16px 14px; border:1px solid #d5e5f1; border-radius:12px; background:#fff; color:#1f3b4d; text-align:left; cursor:pointer; transition:box-shadow .15s;">
+                            <div style="font-size:20px; margin-bottom:6px;">✏️</div>
+                            <div style="font-size:13px; font-weight:700; margin-bottom:4px;">Lançamento Individual</div>
+                            <div style="font-size:11px; color:#4d6778; line-height:1.4;">Registra um método por vez em uma campanha já existente.</div>
+                        </button>
+                        <button type="button" onclick="startDataFlow('lote')"
+                            style="padding:16px 14px; border:1px solid #d5e5f1; border-radius:12px; background:#fff; color:#1f3b4d; text-align:left; cursor:pointer; transition:box-shadow .15s;">
+                            <div style="font-size:20px; margin-bottom:6px;">📦</div>
+                            <div style="font-size:13px; font-weight:700; margin-bottom:4px;">Envio em Lote</div>
+                            <div style="font-size:11px; color:#4d6778; line-height:1.4;">Envia todas as estações de uma campanha em uma única submissão.</div>
+                        </button>
+                    </div>
+
+                    <!-- Seção secundária: administração -->
+                    <div style="border-top:1px solid #e8f0f5; padding-top:12px;">
+                        <div style="font-size:11px; color:#9ab0be; font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px;">Administração</div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button type="button" onclick="startDataFlow('estacoes')"
+                                style="padding:8px 14px; border:1px solid #c5d8e3; border-radius:8px; background:#f4f8fb; color:#3a6070; font-size:12px; font-weight:600; cursor:pointer;">
+                                ⚙ Gerenciar Estações
+                            </button>
+                            <button type="button" onclick="startDataFlow('lista')"
+                                style="padding:8px 14px; border:1px solid #c5d8e3; border-radius:8px; background:#f4f8fb; color:#3a6070; font-size:12px; font-weight:600; cursor:pointer;">
+                                📂 Ver Campanhas
+                            </button>
+                        </div>
+                        <p style="font-size:10px; color:#aabfcb; margin:8px 0 0 0;">
+                            Gerenciar Estações é necessário apenas para adicionar pontos amostrais que ainda não estão ativos.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Tab 1: Selecionar Ilha -->
-            <div id="contentIlha" class="tab-content">
+            <div id="contentIlha" class="tab-content" style="display:none;">
                 <div class="mock-section">
                     <h4>Selecione a Ilha</h4>
                     <select id="ilhaSelect" onchange="onIlhaSelected()"
@@ -45,11 +142,10 @@
                 <div class="mock-section">
                     <h4>Criar Nova Campanha</h4>
                     <form id="campanhaForm" onsubmit="createCampanha(event)">
-                        <label style="display:block; margin-bottom:6px; font-size:13px;">Nome da Campanha (MASC)
-                            *</label>
+                        <label style="display:block; margin-bottom:6px; font-size:13px;">Nome da Campanha (MASC) *</label>
                         <select id="campanhaNome" required
                             style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333;">
-                            <option value="">-- Selecione MASC --</option>
+                            <option value="">-- Selecione o MASC --</option>
                             <option value="MASC 01">MASC 01</option>
                             <option value="MASC 02">MASC 02</option>
                             <option value="MASC 03">MASC 03</option>
@@ -133,26 +229,52 @@
             <!-- Tab 3: Upload Geoespacial -->
             <div id="contentGeo" class="tab-content" style="display:none;">
                 <div class="mock-section">
-                    <h4>Upload de Arquivo Geoespacial</h4>
-                    <div id="geoFormInfo"
-                        style="margin-bottom:15px; padding:10px; background:#fff3cd; border-radius:6px; color:#856404; font-size:13px;">
-                        ⚠️ Crie uma campanha primeiro na aba 2
-                    </div>
-                    <form id="geoForm" onsubmit="uploadGeospatial(event)">
-                        <label style="display:block; margin-bottom:6px; font-size:13px;">Arquivo
-                            KML/KMZ/GeoJSON/Shapefile *</label>
-                        <input type="file" id="geoFile" accept=".kml,.kmz,.geojson,.json,.shp,.zip" required
-                            style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.15); background:rgba(6,20,31,0.4); color:#e5f2f7;">
+                    <h4>Upload de Arquivo Geoespacial (KML / KMZ / GeoJSON)</h4>
 
-                        <div style="font-size:12px; color:#c5d8e3; margin-bottom:15px;">
-                            Formatos aceitos: .kml, .kmz, .geojson, .json, .shp, .zip
+                    <!-- Seletor de campanha -->
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block; margin-bottom:4px; font-size:12px; color:#36566f; font-weight:700;">Campanha *</label>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <select id="geoUploadCampanhaSelect"
+                                style="flex:1; padding:8px 10px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333; font-size:13px;"
+                                onchange="onGeoUploadCampanhaChange()">
+                                <option value="">-- Selecione a campanha --</option>
+                            </select>
+                            <button type="button" onclick="refreshGeoUploadCampanhas()"
+                                style="padding:7px 10px; border:1px solid #ccc; border-radius:8px; background:#f0f4f7; color:#36566f; cursor:pointer; font-size:12px;" title="Atualizar lista">↺</button>
                         </div>
+                    </div>
 
-                        <button type="submit"
-                            style="width:100%; padding:10px; border:none; border-radius:8px; background:#0f8bb3; color:#fff; font-weight:bold; cursor:pointer;">Fazer
-                            Upload</button>
+                    <!-- Seletor de ilha (aparece quando campanha tem múltiplas ilhas) -->
+                    <div id="geoUploadIlhaWrap" style="margin-bottom:12px; display:none;">
+                        <label style="display:block; margin-bottom:4px; font-size:12px; color:#36566f; font-weight:700;">Ilha *</label>
+                        <select id="geoUploadIlhaSelect"
+                            style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333; font-size:13px;"
+                            onchange="onGeoUploadIlhaChange()">
+                        </select>
+                    </div>
+
+                    <!-- Seletor de ponto amostral -->
+                    <div id="geoUploadEspacoWrap" style="margin-bottom:12px; display:none;">
+                        <label style="display:block; margin-bottom:4px; font-size:12px; color:#36566f; font-weight:700;">Ponto Amostral *</label>
+                        <select id="geoUploadEspacoSelect"
+                            style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333; font-size:13px;">
+                            <option value="">-- Selecione o ponto amostral --</option>
+                        </select>
+                        <div style="font-size:11px; color:#7a93a3; margin-top:4px;">O arquivo KML será vinculado a este ponto amostral, representando o percurso registrado naquela estação.</div>
+                    </div>
+
+                    <div id="geoFormInfo" style="margin-bottom:12px; padding:8px 10px; background:#fff3cd; border-radius:6px; color:#856404; font-size:12px; display:none;"></div>
+
+                    <form id="geoForm" onsubmit="uploadGeospatial(event)">
+                        <label style="display:block; margin-bottom:6px; font-size:13px;">Arquivo KML / KMZ / GeoJSON *</label>
+                        <input type="file" id="geoFile" accept=".kml,.kmz,.geojson,.json,.shp,.zip" required
+                            style="width:100%; padding:10px; margin-bottom:6px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333;">
+                        <div style="font-size:11px; color:#888; margin-bottom:14px;">Formatos: .kml, .kmz, .geojson, .json, .shp, .zip</div>
+                        <button type="submit" id="geoSubmitBtn"
+                            style="width:100%; padding:10px; border:none; border-radius:8px; background:#0f8bb3; color:#fff; font-weight:bold; cursor:pointer;">Enviar Arquivo</button>
                     </form>
-                    <div id="geoResult" style="margin-top:15px; padding:10px; border-radius:6px; display:none;"></div>
+                    <div id="geoResult" style="margin-top:12px; padding:10px; border-radius:6px; display:none; font-size:13px;"></div>
                 </div>
             </div>
 
@@ -160,25 +282,40 @@
             <div id="contentMedia" class="tab-content" style="display:none;">
                 <div class="mock-section">
                     <h4>Upload de Fotos e Vídeos</h4>
-                    <div id="mediaFormInfo"
-                        style="margin-bottom:15px; padding:10px; background:rgba(255,200,100,0.1); border-radius:6px; color:#ffd699; font-size:13px;">
-                        ⚠️ Crie uma campanha primeiro na aba 2
-                    </div>
-                    <form id="mediaForm" onsubmit="uploadMedia(event)">
-                        <label style="display:block; margin-bottom:6px; font-size:13px;">Selecione Arquivos *</label>
-                        <input type="file" id="mediaFiles" accept=".jpg,.jpeg,.png,.mp4,.mov,.avi" multiple required
-                            style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.15); background:rgba(6,20,31,0.4); color:#e5f2f7;">
 
-                        <div style="font-size:12px; color:#c5d8e3; margin-bottom:15px;">
-                            Formatos aceitos: .jpg, .jpeg, .png, .mp4, .mov, .avi<br>
-                            Você pode selecionar múltiplos arquivos
+                    <!-- Seletor de campanha -->
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block; margin-bottom:4px; font-size:12px; color:#36566f; font-weight:700;">Campanha *</label>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <select id="mediaUploadCampanhaSelect"
+                                style="flex:1; padding:8px 10px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333; font-size:13px;"
+                                onchange="onMediaUploadCampanhaChange()">
+                                <option value="">-- Selecione a campanha --</option>
+                            </select>
+                            <button type="button" onclick="refreshMediaUploadCampanhas()"
+                                style="padding:7px 10px; border:1px solid #ccc; border-radius:8px; background:#f0f4f7; color:#36566f; cursor:pointer; font-size:12px;" title="Atualizar lista">↺</button>
                         </div>
+                    </div>
 
-                        <button type="submit"
-                            style="width:100%; padding:10px; border:none; border-radius:8px; background:#0f8bb3; color:#fff; font-weight:bold; cursor:pointer;">Fazer
-                            Upload</button>
+                    <!-- Seletor de ilha -->
+                    <div id="mediaUploadIlhaWrap" style="margin-bottom:12px; display:none;">
+                        <label style="display:block; margin-bottom:4px; font-size:12px; color:#36566f; font-weight:700;">Ilha *</label>
+                        <select id="mediaUploadIlhaSelect"
+                            style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333; font-size:13px;">
+                        </select>
+                    </div>
+
+                    <div id="mediaFormInfo" style="margin-bottom:12px; padding:8px 10px; background:#fff3cd; border-radius:6px; color:#856404; font-size:12px; display:none;"></div>
+
+                    <form id="mediaForm" onsubmit="uploadMedia(event)">
+                        <label style="display:block; margin-bottom:6px; font-size:13px;">Selecione as Imagens / Vídeos *</label>
+                        <input type="file" id="mediaFiles" accept=".jpg,.jpeg,.png,.webp,.mp4,.mov,.avi" multiple required
+                            style="width:100%; padding:10px; margin-bottom:6px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333;">
+                        <div style="font-size:11px; color:#888; margin-bottom:14px;">Formatos: .jpg, .jpeg, .png, .webp, .mp4, .mov, .avi — múltiplos arquivos permitidos</div>
+                        <button type="submit" id="mediaSubmitBtn"
+                            style="width:100%; padding:10px; border:none; border-radius:8px; background:#0f8bb3; color:#fff; font-weight:bold; cursor:pointer;">Enviar Arquivos</button>
                     </form>
-                    <div id="mediaResult" style="margin-top:15px; padding:10px; border-radius:6px; display:none;"></div>
+                    <div id="mediaResult" style="margin-top:12px; padding:10px; border-radius:6px; display:none; font-size:13px;"></div>
                 </div>
             </div>
 
@@ -216,8 +353,17 @@
                     <div id="qStep2" style="display:none;">
                         <h5 style="color:#2ec1f1; margin-bottom:10px;">Selecione uma estação para registrar dados:</h5>
                         <div id="qStationsGrid"
-                            style="display:grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap:10px;">
+                            style="display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:10px;">
                             <!-- Stations will be loaded here -->
+                        </div>
+                        <div id="qSelectedStationInfo"
+                            style="display:none; margin-top:12px; padding:8px 10px; border-radius:8px; border:1px solid #d5e5f1; background:#f7fbff; color:#214b66; font-size:12px; font-weight:700;">
+                        </div>
+                        <div id="qMethodActions" style="display:none; margin-top:12px;">
+                            <div style="font-size:12px; font-weight:700; color:#36566f; margin-bottom:8px;">Metodos disponiveis para a estacao selecionada</div>
+                            <div id="qMethodGrid"
+                                style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:10px;">
+                            </div>
                         </div>
                     </div>
 
@@ -272,12 +418,14 @@
                                 </div>
 
                                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-                                    <div><label style="font-size:12px;">Latitude</label><input type="number"
-                                            step="0.000001" id="buscaLat"
+                                    <div><label style="font-size:12px;">Latitude <span style="font-size:10px; color:#7a93a3;">(graus decimais · SIRGAS 2000)</span></label><input type="number"
+                                            step="0.000001" id="buscaLat" placeholder="Ex: -23.550520"
+                                            min="-34" max="5"
                                             style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Longitude</label><input type="number"
-                                            step="0.000001" id="buscaLon"
+                                    <div><label style="font-size:12px;">Longitude <span style="font-size:10px; color:#7a93a3;">(graus decimais · SIRGAS 2000)</span></label><input type="number"
+                                            step="0.000001" id="buscaLon" placeholder="Ex: -46.633309"
+                                            min="-74" max="-28"
                                             style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
                                 </div>
@@ -285,13 +433,13 @@
                                     <label style="font-size:12px;">Planilha Excel (Upload)</label>
                                     <input type="file" id="buscaExcelFile" accept=".xls,.xlsx"
                                         style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
-                                    <label style="font-size:12px;">Arquivo Percurso (GPX/KML) (Upload)</label>
-                                    <input type="file" id="buscaPercursoFile" accept=".gpx,.kml,.kmz"
+                                    <label style="font-size:12px;">Arquivo Percurso (KML/KMZ/GeoJSON/Shapefile) (Upload)</label>
+                                    <input type="file" id="buscaPercursoFile" accept=".kml,.kmz,.geojson,.json,.shp,.zip"
                                         style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
                                     <label style="font-size:12px;">Dados Meteorológicos (Upload Imagem)</label>
                                     <input type="file" id="buscaMeteoFile" accept="image/*"
                                         style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
-                                    <label style="font-size:12px;">Imagens da Busca Ativa (Max 5)</label>
+                                    <label style="font-size:12px;">Imagens da Busca Ativa</label>
                                     <input type="file" id="buscaImagensFile" accept="image/*" multiple
                                         style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
                                 </div>
@@ -427,6 +575,9 @@
                                     <label style="font-size:12px;">Imagem Mosaico (Upload)</label>
                                     <input type="file" id="fotoMosaicoFile" accept="image/*"
                                         style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
+                                    <label style="font-size:12px;">Imagens Complementares (Upload)</label>
+                                    <input type="file" id="fotoComplementaresFiles" accept="image/*" multiple
+                                        style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
                                     <label style="font-size:12px;">Imagens Complementares (JSON Array de URLs)</label>
                                     <input type="text" id="fotoComplementares"
                                         placeholder='["http://...", "http://..."]'
@@ -456,9 +607,52 @@
                 </div>
             </div>
 
-        </div>
+            <!-- Tab 12: Envio em Lote -->
+            <div id="contentLote" class="tab-content" style="display:none;">
+                <div class="mock-section">
+                    <h4>Envio em lote por estação</h4>
+                    <div id="batchSelectedIlhaInfo"
+                        style="margin-bottom:8px; padding:8px 10px; border-radius:8px; border:1px solid #d5e5f1; background:#edf7ff; color:#214b66; font-size:12px; font-weight:700;">
+                        Ilha selecionada: -
+                    </div>
+                    <div
+                        style="margin-bottom:12px; padding:10px; border:1px solid #e5edf3; border-radius:8px; background:#fbfdff; color:#4d6778; font-size:12px; line-height:1.5;">
+                        Monte o lote por campanha. Os arquivos de mídia são enviados primeiro e, em seguida, os registros de Busca Ativa, Vídeo Transecto e Foto Quadrado são persistidos em uma única chamada.
+                    </div>
 
-        <!-- Tab 12: Gestão de Estações -->
+                    <label style="display:block; margin-bottom:6px; font-size:13px;">Selecione a Campanha</label>
+                    <select id="batchCampanhaSelect" onchange="onBatchCampanhaSelected()"
+                        style="width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333;">
+                        <option value="">-- Selecione --</option>
+                    </select>
+
+                    <div id="batchStationsToolbar" style="display:none; margin-bottom:12px; gap:8px; flex-wrap:wrap;">
+                        <button type="button" onclick="markAllBatchMethodCheckboxes(true)"
+                            style="padding:7px 12px; border:1px solid #1f7ea1; background:#edf8fd; color:#155574; border-radius:6px; cursor:pointer;">Marcar tudo</button>
+                        <button type="button" onclick="markAllBatchMethodCheckboxes(false)"
+                            style="padding:7px 12px; border:1px solid #b7c8d4; background:#fff; color:#4d6778; border-radius:6px; cursor:pointer;">Limpar seleção</button>
+                    </div>
+
+                    <div id="batchStationsContainer"
+                        style="display:flex; flex-direction:column; gap:12px; margin-bottom:15px;">
+                        <div
+                            style="padding:12px; border:1px dashed #c7d8e6; border-radius:8px; color:#6a8193; background:#fbfdff;">
+                            Selecione uma campanha para montar o lote.
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <button id="batchSubmitBtn" type="button" onclick="submitBatchUpload()"
+                            style="padding:10px 16px; border:none; border-radius:8px; background:#0f8bb3; color:#fff; font-weight:700; cursor:pointer;">Enviar lote</button>
+                        <div id="batchSubmitHint" style="font-size:12px; color:#6a8193;">O envio utiliza a campanha e a ilha selecionadas acima.</div>
+                    </div>
+
+                    <div id="batchResult"
+                        style="display:none; margin-top:15px; padding:10px; border-radius:8px; font-size:12px;"></div>
+                </div>
+            </div>
+
+        <!-- Tab 13: Gestão de Estações -->
         <div id="contentEstacoes" class="tab-content" style="display:none;">
             <div class="mock-section" style="background:#f8f9fa; border-left:4px solid #0f8bb3; margin-bottom:15px;">
                 <h4 style="margin-top:0; color:#0f8bb3;">Gerenciar Estações da Ilha</h4>
@@ -479,9 +673,13 @@
                         </select>
                     </div>
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
-                        <input type="number" step="0.000001" id="newStationLat" placeholder="Latitude (Decimal)"
+                        <input type="number" step="0.000001" id="newStationLat"
+                            placeholder="Latitude decimal · Ex: -23.550520"
+                            title="Graus decimais — SIRGAS 2000 (EPSG:4674)" min="-34" max="5"
                             style="padding:6px; border:1px solid #ccc; border-radius:4px;">
-                        <input type="number" step="0.000001" id="newStationLon" placeholder="Longitude (Decimal)"
+                        <input type="number" step="0.000001" id="newStationLon"
+                            placeholder="Longitude decimal · Ex: -46.633309"
+                            title="Graus decimais — SIRGAS 2000 (EPSG:4674)" min="-74" max="-28"
                             style="padding:6px; border:1px solid #ccc; border-radius:4px;">
                     </div>
                     <textarea id="newStationDesc" placeholder="Descrição / Referência de localização" rows="1"
@@ -504,7 +702,6 @@
     </div>
 </div>
 </div>
-</div>
 
 <!-- Coral Sol Details Modal (Nested overlay) -->
 <div id="coralSolModal" class="modal-overlay" style="display:none; z-index: 10001; background:rgba(0,0,0,0.5);">
@@ -520,16 +717,16 @@
         </div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-            <div><label style="font-size:12px;">Temp. Inicial (°C)</label><input type="number" step="0.1"
+            <div><label style="font-size:12px;">Temp. Inicial (°C)</label><input type="number" step="0.1" min="-99.99" max="99.99"
                     id="coralTempIni" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
-            <div><label style="font-size:12px;">Temp. Final (°C)</label><input type="number" step="0.1"
+            <div><label style="font-size:12px;">Temp. Final (°C)</label><input type="number" step="0.1" min="-99.99" max="99.99"
                     id="coralTempFim" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
         </div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-            <div><label style="font-size:12px;">Prof. Inicial (m)</label><input type="number" step="0.1"
+            <div><label style="font-size:12px;">Prof. Inicial (m)</label><input type="number" step="0.1" min="0" max="999.99"
                     id="coralProfIni" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
-            <div><label style="font-size:12px;">Prof. Final (m)</label><input type="number" step="0.1" id="coralProfFim"
+            <div><label style="font-size:12px;">Prof. Final (m)</label><input type="number" step="0.1" min="0" max="999.99" id="coralProfFim"
                     style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
         </div>
 
@@ -540,7 +737,7 @@
         </div>
 
         <div style="margin-bottom:15px;">
-            <label style="display:block; margin-bottom:5px; font-size:12px;">Imagens (Max 5)</label>
+            <label style="display:block; margin-bottom:5px; font-size:12px;">Imagens</label>
             <input type="file" id="coralImagensFile" accept="image/*" multiple
                 style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
         </div>
@@ -553,4 +750,3 @@
         </div>
     </div>
 </div>
-

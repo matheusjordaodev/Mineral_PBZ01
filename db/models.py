@@ -78,6 +78,7 @@ class EspacoAmostral(BaseModel):
     
     ilha = relationship("Ilha", back_populates="espacos_amostrais")
     estacoes_amostrais = relationship("EstacaoAmostral", back_populates="espaco_amostral")
+    feicoes_kml = relationship("FeicaoKml", back_populates="espaco_amostral")
 
 class Ilha(BaseModel):
     """Modelo para tabela de ilhas"""
@@ -117,10 +118,13 @@ class Campanha(BaseModel):
     
     estacoes_amostrais = relationship("EstacaoAmostral", back_populates="campanha", cascade="all, delete-orphan")
     documentos = relationship("Documento", back_populates="campanha", cascade="all, delete-orphan")
+    feicoes_kml = relationship("FeicaoKml", back_populates="campanha", cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
-            "id": self.id,
+            "id": self.codigo,
+            "uuid": self.codigo,
+            "db_id": self.id,
             "ilha_ids": [i.id for i in self.ilhas],
             "ilha_nomes": [i.nome for i in self.ilhas],
             "base_apoio_id": self.base_apoio_id,
@@ -134,15 +138,37 @@ class Campanha(BaseModel):
 
 class Documento(BaseModel):
     __tablename__ = 'documentos'
-    
+
     id = Column(Integer, primary_key=True)
     campanha_id = Column(Integer, ForeignKey('campanhas.id'), nullable=True) # Opcional
     titulo = Column(String(200), nullable=False)
     url = Column(Text, nullable=False)
     data_upload = Column(DateTime, server_default=func.now())
     tipo = Column(String(50)) # especificacao, projeto_exec, rel_parcial, rel_final, rel_campo
-    
+
     campanha = relationship("Campanha", back_populates="documentos")
+
+
+class FeicaoKml(BaseModel):
+    """Feições geoespaciais importadas de arquivos KML/KMZ, persistidas no PostGIS."""
+    __tablename__ = 'feicoes_kml'
+
+    id = Column(Integer, primary_key=True)
+    campanha_id = Column(Integer, ForeignKey('campanhas.id'), nullable=False, index=True)
+    espaco_amostral_id = Column(Integer, ForeignKey('espacos_amostrais.id'), nullable=True, index=True)
+    # ilha_id é derivado de espaco_amostral.ilha_id; mantido para compatibilidade com registros antigos
+    ilha_id = Column(Integer, ForeignKey('ilhas.id'), nullable=True, index=True)
+
+    arquivo_origem = Column(String(500))          # nome do arquivo KML
+    nome = Column(String(500))                    # nome do placemark
+    descricao = Column(Text)                      # descrição do placemark
+    tipo_geometria = Column(String(50))           # Point | LineString | Polygon
+    geom = Column(Geometry(geometry_type='GEOMETRY', srid=4326))
+    propriedades = Column(JSONB, default={})      # quaisquer propriedades extras
+
+    campanha = relationship("Campanha", back_populates="feicoes_kml")
+    espaco_amostral = relationship("EspacoAmostral", back_populates="feicoes_kml")
+    ilha = relationship("Ilha")
 
 class EstacaoAmostral(BaseModel):
     __tablename__ = 'estacoes_amostrais'

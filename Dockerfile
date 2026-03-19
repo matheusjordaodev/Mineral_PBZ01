@@ -7,6 +7,11 @@ WORKDIR /app
 # Copy the requirements file into the container.
 COPY requirements.txt .
 
+# Install system dependencies required for WMF conversion.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends inkscape \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install dependencies.
 RUN pip install --no-cache-dir -r requirements.txt
 

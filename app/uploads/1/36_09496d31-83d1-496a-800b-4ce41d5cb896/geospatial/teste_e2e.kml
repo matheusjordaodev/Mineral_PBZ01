@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>Ponto E2E</name>
+  <Placemark>
+    <name>Ponto E2E</name>
+    <description>Ponto de teste automatizado</description>
+    <Point><coordinates>-44.85,-23.42,0</coordinates></Point>
+  </Placemark>
+</Document>
+</kml>

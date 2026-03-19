@@ -1,20 +1,32 @@
-from datetime import datetime
-from typing import Any, List, Optional
+from datetime import date, datetime, time
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, subqueryload
+from routes.auth import get_current_active_user
+from db.models import Usuario
 
 from db.database import get_db
 from db.models import (
     BuscaAtiva,
     Campanha,
+    EspacoAmostral,
     EstacaoAmostral,
     Fotoquadrado,
+    Ilha,
     ProtocoloDAFOR,
     VideoTransecto,
 )
 from services.azure_blob_service import AzureBlobService
+from services.coleta_service import (
+    create_busca_ativa,
+    create_fotoquadrado,
+    create_video_transecto,
+    ensure_campanha_exists,
+    normalize_datetime,
+    to_float,
+)
 
 try:
     blob_service = AzureBlobService()
@@ -26,34 +38,17 @@ def get_url(url: Optional[str]) -> Optional[str]:
     return blob_service.get_sas_url(url) if blob_service and url else url
 
 
-def _to_float(value: Any) -> Optional[float]:
-    if value in (None, ""):
-        return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
-
-
-def _normalize_datetime(value: Optional[datetime]) -> Optional[datetime]:
-    if not value:
-        return None
-    if value.tzinfo is not None:
-        return value.astimezone().replace(tzinfo=None)
-    return value
-
-
 def _serialize_dafor(item: ProtocoloDAFOR) -> dict:
     imagens = item.imagens if isinstance(item.imagens, list) else []
     return {
         "id": item.id,
         "data": item.data.isoformat() if item.data else None,
         "hora": item.hora.isoformat() if item.hora else None,
-        "temperatura_inicial": _to_float(item.temperatura_inicial),
-        "temperatura_final": _to_float(item.temperatura_final),
-        "profundidade_inicial": _to_float(item.profundidade_inicial),
-        "profundidade_final": _to_float(item.profundidade_final),
-        "iar": _to_float(item.iar),
+        "temperatura_inicial": to_float(item.temperatura_inicial),
+        "temperatura_final": to_float(item.temperatura_final),
+        "profundidade_inicial": to_float(item.profundidade_inicial),
+        "profundidade_final": to_float(item.profundidade_final),
+        "iar": to_float(item.iar),
         "abundancia": item.abundancia,
         "imagens": [get_url(img) for img in imagens],
         "detalhes": item.detalhes,
@@ -70,12 +65,12 @@ def _serialize_busca_ativa(item: BuscaAtiva) -> dict:
         "data": item.data.isoformat() if item.data else None,
         "hora_inicio": item.hora_inicio.isoformat() if item.hora_inicio else None,
         "duracao": str(item.duracao) if item.duracao else None,
-        "profundidade_inicial": _to_float(item.profundidade_inicial),
-        "profundidade_final": _to_float(item.profundidade_final),
-        "temperatura_inicial": _to_float(item.temperatura_inicial),
-        "temperatura_final": _to_float(item.temperatura_final),
-        "visibilidade_vertical": _to_float(item.visibilidade_vertical),
-        "visibilidade_horizontal": _to_float(item.visibilidade_horizontal),
+        "profundidade_inicial": to_float(item.profundidade_inicial),
+        "profundidade_final": to_float(item.profundidade_final),
+        "temperatura_inicial": to_float(item.temperatura_inicial),
+        "temperatura_final": to_float(item.temperatura_final),
+        "visibilidade_vertical": to_float(item.visibilidade_vertical),
+        "visibilidade_horizontal": to_float(item.visibilidade_horizontal),
         "planilha_excel_url": get_url(item.planilha_excel_url),
         "arquivo_percurso_url": get_url(item.arquivo_percurso_url),
         "dados_meteo": item.dados_meteo,
@@ -91,15 +86,15 @@ def _serialize_video_transecto(item: VideoTransecto) -> dict:
         "estacao_amostral_id": item.estacao_amostral_id,
         "data": item.data.isoformat() if item.data else None,
         "hora": item.hora.isoformat() if item.hora else None,
-        "profundidade_inicial": _to_float(item.profundidade_inicial),
-        "profundidade_final": _to_float(item.profundidade_final),
-        "temperatura_inicial": _to_float(item.temperatura_inicial),
-        "temperatura_final": _to_float(item.temperatura_final),
-        "visibilidade_vertical": _to_float(item.visibilidade_vertical),
-        "visibilidade_horizontal": _to_float(item.visibilidade_horizontal),
-        "riqueza_especifica": _to_float(item.riqueza_especifica),
-        "diversidade_shannon": _to_float(item.diversidade_shannon),
-        "equitabilidade_jaccard": _to_float(item.equitabilidade_jaccard),
+        "profundidade_inicial": to_float(item.profundidade_inicial),
+        "profundidade_final": to_float(item.profundidade_final),
+        "temperatura_inicial": to_float(item.temperatura_inicial),
+        "temperatura_final": to_float(item.temperatura_final),
+        "visibilidade_vertical": to_float(item.visibilidade_vertical),
+        "visibilidade_horizontal": to_float(item.visibilidade_horizontal),
+        "riqueza_especifica": to_float(item.riqueza_especifica),
+        "diversidade_shannon": to_float(item.diversidade_shannon),
+        "equitabilidade_jaccard": to_float(item.equitabilidade_jaccard),
         "video_url": get_url(item.video_url),
         "dados_meteo": item.dados_meteo,
     }
@@ -112,54 +107,125 @@ def _serialize_fotoquadrado(item: Fotoquadrado) -> dict:
         "estacao_amostral_id": item.estacao_amostral_id,
         "data": item.data.isoformat() if item.data else None,
         "hora": item.hora.isoformat() if item.hora else None,
-        "profundidade": _to_float(item.profundidade),
-        "temperatura": _to_float(item.temperatura),
-        "visibilidade_vertical": _to_float(item.visibilidade_vertical),
-        "visibilidade_horizontal": _to_float(item.visibilidade_horizontal),
+        "profundidade": to_float(item.profundidade),
+        "temperatura": to_float(item.temperatura),
+        "visibilidade_vertical": to_float(item.visibilidade_vertical),
+        "visibilidade_horizontal": to_float(item.visibilidade_horizontal),
         "imagem_mosaico_url": get_url(item.imagem_mosaico_url),
         "imagens_complementares": [get_url(img) for img in imagens],
         "dados_meteo": item.dados_meteo,
-        "riqueza_especifica": _to_float(item.riqueza_especifica),
-        "diversidade_shannon": _to_float(item.diversidade_shannon),
-        "equitabilidade_jaccard": _to_float(item.equitabilidade_jaccard),
+        "riqueza_especifica": to_float(item.riqueza_especifica),
+        "diversidade_shannon": to_float(item.diversidade_shannon),
+        "equitabilidade_jaccard": to_float(item.equitabilidade_jaccard),
     }
 
 
-def _get_or_create_first_estacao(campanha_id: int, db: Session) -> EstacaoAmostral:
-    estacao = (
-        db.query(EstacaoAmostral)
-        .filter(
-            EstacaoAmostral.campanha_id == campanha_id,
-            EstacaoAmostral.deleted_at.is_(None),
-        )
-        .order_by(EstacaoAmostral.id.asc())
-        .first()
-    )
-    if estacao:
-        return estacao
-
-    estacao = EstacaoAmostral(campanha_id=campanha_id, numero=1, data=datetime.now().date())
-    db.add(estacao)
-    db.commit()
-    db.refresh(estacao)
-    return estacao
-
-
-def _ensure_campanha_exists(campanha_id: int, db: Session) -> None:
-    campanha = (
-        db.query(Campanha)
-        .filter(Campanha.id == campanha_id, Campanha.deleted_at.is_(None))
-        .first()
-    )
-    if not campanha:
-        raise HTTPException(status_code=404, detail="Campanha nao encontrada")
+def _refresh_and_serialize(db: Session, model: str, item_id: int) -> Dict[str, Any]:
+    if model == "busca":
+        item = db.query(BuscaAtiva).filter(BuscaAtiva.id == item_id).first()
+        return _serialize_busca_ativa(item)
+    if model == "video":
+        item = db.query(VideoTransecto).filter(VideoTransecto.id == item_id).first()
+        return _serialize_video_transecto(item)
+    item = db.query(Fotoquadrado).filter(Fotoquadrado.id == item_id).first()
+    return _serialize_fotoquadrado(item)
 
 
 router = APIRouter()
 
 
+def _resolve_request_campaign(path_ref: str, db: Session, body_ref: Optional[str] = None):
+    campanha = ensure_campanha_exists(path_ref, db)
+    if body_ref is None:
+        return campanha
+
+    body_campanha = ensure_campanha_exists(body_ref, db)
+    if body_campanha.id != campanha.id:
+        raise HTTPException(status_code=400, detail="Campanha do corpo difere da URL")
+    return campanha
+
+
+@router.get("/api/buscas-ativas")
+def list_buscas_ativas(
+    ilha_id: Optional[int] = None,
+    campanha_id: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    campanha = ensure_campanha_exists(campanha_id, db) if campanha_id else None
+
+    query = (
+        db.query(BuscaAtiva)
+        .join(EstacaoAmostral, BuscaAtiva.estacao_amostral_id == EstacaoAmostral.id)
+        .join(Campanha, EstacaoAmostral.campanha_id == Campanha.id)
+        .outerjoin(EspacoAmostral, EstacaoAmostral.espaco_amostral_id == EspacoAmostral.id)
+        .outerjoin(Ilha, EspacoAmostral.ilha_id == Ilha.id)
+        .options(
+            subqueryload(BuscaAtiva.estacao_amostral)
+                .subqueryload(EstacaoAmostral.campanha)
+                .subqueryload(Campanha.ilhas),
+            subqueryload(BuscaAtiva.estacao_amostral)
+                .subqueryload(EstacaoAmostral.espaco_amostral)
+                .subqueryload(EspacoAmostral.ilha),
+            subqueryload(BuscaAtiva.protocolos_dafor),
+        )
+        .filter(
+            BuscaAtiva.deleted_at.is_(None),
+            EstacaoAmostral.deleted_at.is_(None),
+        )
+    )
+
+    if campanha:
+        query = query.filter(Campanha.id == campanha.id)
+
+    if ilha_id is not None:
+        query = query.filter(Ilha.id == ilha_id)
+
+    items = (
+        query.order_by(
+            Campanha.data_campanha.desc(),
+            BuscaAtiva.data.desc(),
+            BuscaAtiva.hora_inicio.desc(),
+            BuscaAtiva.id.desc(),
+        ).all()
+    )
+
+    result = []
+    for item in items:
+        estacao = item.estacao_amostral
+        campanha_ref = estacao.campanha if estacao else None
+        espaco = estacao.espaco_amostral if estacao else None
+        ilha_ref = espaco.ilha if espaco else None
+
+        if not ilha_ref and campanha_ref and campanha_ref.ilhas:
+            ilha_ref = campanha_ref.ilhas[0]
+
+        payload = _serialize_busca_ativa(item)
+        payload.update(
+            {
+                "campanha_id": campanha_ref.codigo if campanha_ref else None,
+                "campanha_nome": campanha_ref.nome if campanha_ref else None,
+                "campanha_data": campanha_ref.data_campanha.isoformat()
+                if campanha_ref and campanha_ref.data_campanha
+                else None,
+                "ilha_id": ilha_ref.id if ilha_ref else None,
+                "ilha_nome": ilha_ref.nome if ilha_ref else None,
+                "espaco_amostral_id": espaco.id if espaco else estacao.espaco_amostral_id if estacao else None,
+                "espaco_codigo": espaco.codigo if espaco else None,
+                "espaco_nome": espaco.nome if espaco else None,
+                "estacao_numero": estacao.numero if estacao else None,
+                "qtd_imagens": len(payload.get("imagens") or []),
+                "qtd_protocolos_dafor": len(payload.get("protocolos_dafor") or []),
+            }
+        )
+        result.append(payload)
+
+    return result
+
+
 class BuscaAtivaCreate(BaseModel):
-    campanha_id: int
+    campanha_id: str
+    estacao_amostral_id: Optional[int] = None
+    numero_busca: Optional[int] = None
     data_hora_inicio: Optional[datetime] = None
     data_hora_fim: Optional[datetime] = None
     encontrou_coral_sol: bool = False
@@ -180,7 +246,8 @@ class BuscaAtivaCreate(BaseModel):
 
 
 class VideoTransectoCreate(BaseModel):
-    campanha_id: int
+    campanha_id: str
+    estacao_amostral_id: Optional[int] = None
     nome_video: Optional[str] = None
     observacoes: Optional[str] = None
     data_hora: Optional[datetime] = None
@@ -197,13 +264,101 @@ class VideoTransectoCreate(BaseModel):
     equitabilidade_jaccard: Optional[float] = None
 
 
+class FotoquadradoCreate(BaseModel):
+    campanha_id: str
+    estacao_amostral_id: Optional[int] = None
+    data_hora: Optional[datetime] = None
+    data: Optional[date] = None
+    hora: Optional[time] = None
+    observacoes: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    profundidade: Optional[float] = None
+    temperatura: Optional[float] = None
+    visibilidade_vertical: Optional[float] = None
+    visibilidade_horizontal: Optional[float] = None
+    imagem_mosaico_url: Optional[str] = None
+    imagens_complementares: List[str] = Field(default_factory=list)
+    dados_meteo: Optional[dict] = None
+    riqueza_especifica: Optional[float] = None
+    diversidade_shannon: Optional[float] = None
+    equitabilidade_jaccard: Optional[float] = None
+
+
+class BuscaAtivaLoteItem(BaseModel):
+    numero_busca: Optional[int] = None
+    data_hora_inicio: Optional[datetime] = None
+    data_hora_fim: Optional[datetime] = None
+    encontrou_coral_sol: bool = False
+    observacoes: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    imagens: List[str] = Field(default_factory=list)
+    detalhes_coral: Optional[dict] = None
+    planilha_excel_url: Optional[str] = None
+    arquivo_percurso_url: Optional[str] = None
+    dados_meteo: Optional[dict] = None
+    profundidade_inicial: Optional[float] = None
+    profundidade_final: Optional[float] = None
+    temperatura_inicial: Optional[float] = None
+    temperatura_final: Optional[float] = None
+    visibilidade_vertical: Optional[float] = None
+    visibilidade_horizontal: Optional[float] = None
+
+
+class VideoTransectoLoteItem(BaseModel):
+    nome_video: Optional[str] = None
+    observacoes: Optional[str] = None
+    data_hora: Optional[datetime] = None
+    video_url: Optional[str] = None
+    dados_meteo: Optional[dict] = None
+    profundidade_inicial: Optional[float] = None
+    profundidade_final: Optional[float] = None
+    temperatura_inicial: Optional[float] = None
+    temperatura_final: Optional[float] = None
+    visibilidade_vertical: Optional[float] = None
+    visibilidade_horizontal: Optional[float] = None
+    riqueza_especifica: Optional[float] = None
+    diversidade_shannon: Optional[float] = None
+    equitabilidade_jaccard: Optional[float] = None
+
+
+class FotoquadradoLoteItem(BaseModel):
+    data_hora: Optional[datetime] = None
+    observacoes: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    profundidade: Optional[float] = None
+    temperatura: Optional[float] = None
+    visibilidade_vertical: Optional[float] = None
+    visibilidade_horizontal: Optional[float] = None
+    imagem_mosaico_url: Optional[str] = None
+    imagens_complementares: List[str] = Field(default_factory=list)
+    dados_meteo: Optional[dict] = None
+    riqueza_especifica: Optional[float] = None
+    diversidade_shannon: Optional[float] = None
+    equitabilidade_jaccard: Optional[float] = None
+
+
+class EstacaoEnvioLote(BaseModel):
+    estacao_amostral_id: int
+    buscas_ativas: List[BuscaAtivaLoteItem] = Field(default_factory=list)
+    video_transectos: List[VideoTransectoLoteItem] = Field(default_factory=list)
+    fotoquadrados: List[FotoquadradoLoteItem] = Field(default_factory=list)
+
+
+class EnvioLoteCreate(BaseModel):
+    estacoes: List[EstacaoEnvioLote] = Field(default_factory=list)
+
+
 @router.get("/api/campanhas/{campanha_id}/busca-ativa")
-def get_busca_ativa(campanha_id: int, db: Session = Depends(get_db)):
+def get_busca_ativa(campanha_id: str, db: Session = Depends(get_db)):
+    campanha = ensure_campanha_exists(campanha_id, db)
     items = (
         db.query(BuscaAtiva)
         .join(EstacaoAmostral, BuscaAtiva.estacao_amostral_id == EstacaoAmostral.id)
         .filter(
-            EstacaoAmostral.campanha_id == campanha_id,
+            EstacaoAmostral.campanha_id == campanha.id,
             EstacaoAmostral.deleted_at.is_(None),
             BuscaAtiva.deleted_at.is_(None),
         )
@@ -214,112 +369,29 @@ def get_busca_ativa(campanha_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/api/campanhas/{campanha_id}/busca-ativa")
-def create_busca_ativa(campanha_id: int, item: BuscaAtivaCreate, db: Session = Depends(get_db)):
-    if item.campanha_id != campanha_id:
-        raise HTTPException(status_code=400, detail="Campanha do corpo difere da URL")
+def post_busca_ativa(campanha_id: str, item: BuscaAtivaCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_active_user)):
+    campanha = _resolve_request_campaign(campanha_id, db, item.campanha_id)
 
-    _ensure_campanha_exists(campanha_id, db)
-    estacao = _get_or_create_first_estacao(campanha_id, db)
-
-    inicio = _normalize_datetime(item.data_hora_inicio)
-    fim = _normalize_datetime(item.data_hora_fim)
-
-    duration = None
-    if inicio and fim:
-        try:
-            duration = fim - inicio
-        except Exception:
-            duration = None
-
-    data_reg = inicio.date() if inicio else datetime.now().date()
-    hora_reg = inicio.time() if inicio else None
-    count = (
-        db.query(BuscaAtiva)
-        .filter(
-            BuscaAtiva.estacao_amostral_id == estacao.id,
-            BuscaAtiva.deleted_at.is_(None),
-        )
-        .count()
-        + 1
-    )
-
-    dados_meteo = {}
-    if item.observacoes:
-        dados_meteo["observacoes"] = item.observacoes
-    if item.latitude is not None:
-        dados_meteo["lat"] = item.latitude
-    if item.longitude is not None:
-        dados_meteo["lon"] = item.longitude
-    if isinstance(item.dados_meteo, dict):
-        dados_meteo.update(item.dados_meteo)
-
-    db_item = BuscaAtiva(
-        estacao_amostral_id=estacao.id,
-        numero_busca=count,
-        data=data_reg,
-        hora_inicio=hora_reg,
-        duracao=duration,
-        profundidade_inicial=item.profundidade_inicial,
-        profundidade_final=item.profundidade_final,
-        temperatura_inicial=item.temperatura_inicial,
-        temperatura_final=item.temperatura_final,
-        visibilidade_vertical=item.visibilidade_vertical,
-        visibilidade_horizontal=item.visibilidade_horizontal,
-        encontrou_coral_sol=item.encontrou_coral_sol,
-        imagens=item.imagens or [],
-        planilha_excel_url=item.planilha_excel_url,
-        arquivo_percurso_url=item.arquivo_percurso_url,
-        dados_meteo=dados_meteo or None,
-    )
-    db.add(db_item)
-    db.commit()
-    db.refresh(db_item)
-
-    if item.encontrou_coral_sol and isinstance(item.detalhes_coral, dict):
-        details = dict(item.detalhes_coral)
-        try:
-            data_dafor = (
-                datetime.strptime(details.get("data"), "%Y-%m-%d").date()
-                if details.get("data")
-                else data_reg
-            )
-            hora_dafor = (
-                datetime.strptime(details.get("hora"), "%H:%M").time()
-                if details.get("hora")
-                else hora_reg
-            )
-        except Exception:
-            data_dafor = data_reg
-            hora_dafor = hora_reg
-
-        imagens_dafor = details.get("imagens") if isinstance(details.get("imagens"), list) else []
-        dafor = ProtocoloDAFOR(
-            busca_ativa_id=db_item.id,
-            data=data_dafor,
-            hora=hora_dafor,
-            temperatura_inicial=_to_float(details.get("temp_inicial")),
-            temperatura_final=_to_float(details.get("temp_final")),
-            profundidade_inicial=_to_float(details.get("prof_inicial")),
-            profundidade_final=_to_float(details.get("prof_final")),
-            iar=_to_float(details.get("iar")),
-            imagens=imagens_dafor,
-            abundancia=details.get("abundancia"),
-            detalhes=details,
-        )
-        db.add(dafor)
+    try:
+        db_item = create_busca_ativa(db, campanha.id, item.model_dump())
         db.commit()
-        db.refresh(db_item)
-
-    return _serialize_busca_ativa(db_item)
+        return _refresh_and_serialize(db, "busca", db_item.id)
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.get("/api/campanhas/{campanha_id}/video-transectos")
-def get_video_transectos(campanha_id: int, db: Session = Depends(get_db)):
+def get_video_transectos(campanha_id: str, db: Session = Depends(get_db)):
+    campanha = ensure_campanha_exists(campanha_id, db)
     items = (
         db.query(VideoTransecto)
         .join(EstacaoAmostral, VideoTransecto.estacao_amostral_id == EstacaoAmostral.id)
         .filter(
-            EstacaoAmostral.campanha_id == campanha_id,
+            EstacaoAmostral.campanha_id == campanha.id,
             EstacaoAmostral.deleted_at.is_(None),
             VideoTransecto.deleted_at.is_(None),
         )
@@ -330,58 +402,29 @@ def get_video_transectos(campanha_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/api/campanhas/{campanha_id}/video-transectos")
-def create_video_transecto(campanha_id: int, item: VideoTransectoCreate, db: Session = Depends(get_db)):
-    if item.campanha_id != campanha_id:
-        raise HTTPException(status_code=400, detail="Campanha do corpo difere da URL")
+def post_video_transecto(campanha_id: str, item: VideoTransectoCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_active_user)):
+    campanha = _resolve_request_campaign(campanha_id, db, item.campanha_id)
 
-    _ensure_campanha_exists(campanha_id, db)
-    estacao = _get_or_create_first_estacao(campanha_id, db)
-
-    data_reg = item.data_hora.date() if item.data_hora else datetime.now().date()
-    hora_reg = item.data_hora.time() if item.data_hora else None
-
-    video_url = item.video_url
-    if not video_url and item.observacoes and "Video URL:" in item.observacoes:
-        maybe_url = item.observacoes.split("Video URL:", 1)[1].strip()
-        video_url = None if maybe_url.upper() == "N/A" else maybe_url
-
-    dados_meteo = {}
-    if isinstance(item.dados_meteo, dict):
-        dados_meteo.update(item.dados_meteo)
-    if item.nome_video:
-        dados_meteo.setdefault("nome_video", item.nome_video)
-    if item.observacoes:
-        dados_meteo.setdefault("observacoes", item.observacoes)
-
-    db_item = VideoTransecto(
-        estacao_amostral_id=estacao.id,
-        data=data_reg,
-        hora=hora_reg,
-        profundidade_inicial=item.profundidade_inicial,
-        profundidade_final=item.profundidade_final,
-        temperatura_inicial=item.temperatura_inicial,
-        temperatura_final=item.temperatura_final,
-        visibilidade_vertical=item.visibilidade_vertical,
-        visibilidade_horizontal=item.visibilidade_horizontal,
-        video_url=video_url,
-        dados_meteo=dados_meteo or None,
-        riqueza_especifica=item.riqueza_especifica,
-        diversidade_shannon=item.diversidade_shannon,
-        equitabilidade_jaccard=item.equitabilidade_jaccard,
-    )
-    db.add(db_item)
-    db.commit()
-    db.refresh(db_item)
-    return _serialize_video_transecto(db_item)
+    try:
+        db_item = create_video_transecto(db, campanha.id, item.model_dump())
+        db.commit()
+        return _refresh_and_serialize(db, "video", db_item.id)
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.get("/api/campanhas/{campanha_id}/fotoquadrados")
-def get_fotoquadrados(campanha_id: int, db: Session = Depends(get_db)):
+def get_fotoquadrados(campanha_id: str, db: Session = Depends(get_db)):
+    campanha = ensure_campanha_exists(campanha_id, db)
     items = (
         db.query(Fotoquadrado)
         .join(Fotoquadrado.estacao_amostral)
         .filter(
-            EstacaoAmostral.campanha_id == campanha_id,
+            EstacaoAmostral.campanha_id == campanha.id,
             EstacaoAmostral.deleted_at.is_(None),
             Fotoquadrado.deleted_at.is_(None),
         )
@@ -389,3 +432,319 @@ def get_fotoquadrados(campanha_id: int, db: Session = Depends(get_db)):
         .all()
     )
     return [_serialize_fotoquadrado(item) for item in items]
+
+
+@router.post("/api/campanhas/{campanha_id}/fotoquadrados")
+def post_fotoquadrado(campanha_id: str, item: FotoquadradoCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_active_user)):
+    campanha = _resolve_request_campaign(campanha_id, db, item.campanha_id)
+
+    payload = item.model_dump()
+    payload["data_hora"] = normalize_datetime(payload.get("data_hora"))
+
+    try:
+        db_item = create_fotoquadrado(db, campanha.id, payload)
+        db.commit()
+        return _refresh_and_serialize(db, "foto", db_item.id)
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+class BuscaAtivaUpdate(BaseModel):
+    numero_busca: Optional[int] = None
+    data_hora_inicio: Optional[datetime] = None
+    data_hora_fim: Optional[datetime] = None
+    encontrou_coral_sol: Optional[bool] = None
+    profundidade_inicial: Optional[float] = None
+    profundidade_final: Optional[float] = None
+    temperatura_inicial: Optional[float] = None
+    temperatura_final: Optional[float] = None
+    visibilidade_vertical: Optional[float] = None
+    visibilidade_horizontal: Optional[float] = None
+    dados_meteo: Optional[dict] = None
+    imagens: Optional[List[str]] = None
+
+
+class VideoTransectoUpdate(BaseModel):
+    data_hora: Optional[datetime] = None
+    profundidade_inicial: Optional[float] = None
+    profundidade_final: Optional[float] = None
+    temperatura_inicial: Optional[float] = None
+    temperatura_final: Optional[float] = None
+    visibilidade_vertical: Optional[float] = None
+    visibilidade_horizontal: Optional[float] = None
+    riqueza_especifica: Optional[float] = None
+    diversidade_shannon: Optional[float] = None
+    equitabilidade_jaccard: Optional[float] = None
+    video_url: Optional[str] = None
+    dados_meteo: Optional[dict] = None
+
+
+class FotoquadradoUpdate(BaseModel):
+    data_hora: Optional[datetime] = None
+    profundidade: Optional[float] = None
+    temperatura: Optional[float] = None
+    visibilidade_vertical: Optional[float] = None
+    visibilidade_horizontal: Optional[float] = None
+    riqueza_especifica: Optional[float] = None
+    diversidade_shannon: Optional[float] = None
+    equitabilidade_jaccard: Optional[float] = None
+    imagem_mosaico_url: Optional[str] = None
+    imagens_complementares: Optional[List[str]] = None
+    dados_meteo: Optional[dict] = None
+
+
+@router.put("/api/busca-ativa/{item_id}")
+def update_busca_ativa(item_id: int, payload: BuscaAtivaUpdate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_active_user)):
+    item = db.query(BuscaAtiva).filter(BuscaAtiva.id == item_id, BuscaAtiva.deleted_at.is_(None)).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Busca ativa não encontrada")
+
+    if payload.numero_busca is not None:
+        item.numero_busca = payload.numero_busca
+    if payload.data_hora_inicio is not None:
+        item.data = payload.data_hora_inicio.date()
+        item.hora_inicio = payload.data_hora_inicio.time()
+    if payload.data_hora_fim is not None and payload.data_hora_inicio is not None:
+        from datetime import timedelta
+        delta = payload.data_hora_fim - payload.data_hora_inicio
+        item.duracao = delta
+    if payload.encontrou_coral_sol is not None:
+        item.encontrou_coral_sol = payload.encontrou_coral_sol
+    if payload.profundidade_inicial is not None:
+        item.profundidade_inicial = payload.profundidade_inicial
+    if payload.profundidade_final is not None:
+        item.profundidade_final = payload.profundidade_final
+    if payload.temperatura_inicial is not None:
+        item.temperatura_inicial = payload.temperatura_inicial
+    if payload.temperatura_final is not None:
+        item.temperatura_final = payload.temperatura_final
+    if payload.visibilidade_vertical is not None:
+        item.visibilidade_vertical = payload.visibilidade_vertical
+    if payload.visibilidade_horizontal is not None:
+        item.visibilidade_horizontal = payload.visibilidade_horizontal
+    if payload.dados_meteo is not None:
+        item.dados_meteo = payload.dados_meteo
+    if payload.imagens is not None:
+        item.imagens = payload.imagens
+
+    try:
+        db.commit()
+        return _refresh_and_serialize(db, "busca", item.id)
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.delete("/api/busca-ativa/{item_id}")
+def delete_busca_ativa(item_id: int, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_active_user)):
+    from datetime import datetime as _dt
+    item = db.query(BuscaAtiva).filter(BuscaAtiva.id == item_id, BuscaAtiva.deleted_at.is_(None)).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Busca ativa não encontrada")
+    item.deleted_at = _dt.utcnow()
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return {"success": True, "deleted": item_id}
+
+
+@router.put("/api/video-transectos/{item_id}")
+def update_video_transecto(item_id: int, payload: VideoTransectoUpdate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_active_user)):
+    item = db.query(VideoTransecto).filter(VideoTransecto.id == item_id, VideoTransecto.deleted_at.is_(None)).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Video transecto não encontrado")
+
+    if payload.data_hora is not None:
+        item.data = payload.data_hora.date()
+        item.hora = payload.data_hora.time()
+    if payload.profundidade_inicial is not None:
+        item.profundidade_inicial = payload.profundidade_inicial
+    if payload.profundidade_final is not None:
+        item.profundidade_final = payload.profundidade_final
+    if payload.temperatura_inicial is not None:
+        item.temperatura_inicial = payload.temperatura_inicial
+    if payload.temperatura_final is not None:
+        item.temperatura_final = payload.temperatura_final
+    if payload.visibilidade_vertical is not None:
+        item.visibilidade_vertical = payload.visibilidade_vertical
+    if payload.visibilidade_horizontal is not None:
+        item.visibilidade_horizontal = payload.visibilidade_horizontal
+    if payload.riqueza_especifica is not None:
+        item.riqueza_especifica = payload.riqueza_especifica
+    if payload.diversidade_shannon is not None:
+        item.diversidade_shannon = payload.diversidade_shannon
+    if payload.equitabilidade_jaccard is not None:
+        item.equitabilidade_jaccard = payload.equitabilidade_jaccard
+    if payload.video_url is not None:
+        item.video_url = payload.video_url
+    if payload.dados_meteo is not None:
+        item.dados_meteo = payload.dados_meteo
+
+    try:
+        db.commit()
+        return _refresh_and_serialize(db, "video", item.id)
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.delete("/api/video-transectos/{item_id}")
+def delete_video_transecto(item_id: int, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_active_user)):
+    from datetime import datetime as _dt
+    item = db.query(VideoTransecto).filter(VideoTransecto.id == item_id, VideoTransecto.deleted_at.is_(None)).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Video transecto não encontrado")
+    item.deleted_at = _dt.utcnow()
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return {"success": True, "deleted": item_id}
+
+
+@router.put("/api/fotoquadrados/{item_id}")
+def update_fotoquadrado(item_id: int, payload: FotoquadradoUpdate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_active_user)):
+    item = db.query(Fotoquadrado).filter(Fotoquadrado.id == item_id, Fotoquadrado.deleted_at.is_(None)).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Fotoquadrado não encontrado")
+
+    if payload.data_hora is not None:
+        item.data = payload.data_hora.date()
+        item.hora = payload.data_hora.time()
+    if payload.profundidade is not None:
+        item.profundidade = payload.profundidade
+    if payload.temperatura is not None:
+        item.temperatura = payload.temperatura
+    if payload.visibilidade_vertical is not None:
+        item.visibilidade_vertical = payload.visibilidade_vertical
+    if payload.visibilidade_horizontal is not None:
+        item.visibilidade_horizontal = payload.visibilidade_horizontal
+    if payload.riqueza_especifica is not None:
+        item.riqueza_especifica = payload.riqueza_especifica
+    if payload.diversidade_shannon is not None:
+        item.diversidade_shannon = payload.diversidade_shannon
+    if payload.equitabilidade_jaccard is not None:
+        item.equitabilidade_jaccard = payload.equitabilidade_jaccard
+    if payload.imagem_mosaico_url is not None:
+        item.imagem_mosaico_url = payload.imagem_mosaico_url
+    if payload.imagens_complementares is not None:
+        item.imagens_complementares = payload.imagens_complementares
+    if payload.dados_meteo is not None:
+        item.dados_meteo = payload.dados_meteo
+
+    try:
+        db.commit()
+        return _refresh_and_serialize(db, "foto", item.id)
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.delete("/api/fotoquadrados/{item_id}")
+def delete_fotoquadrado(item_id: int, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_active_user)):
+    from datetime import datetime as _dt
+    item = db.query(Fotoquadrado).filter(Fotoquadrado.id == item_id, Fotoquadrado.deleted_at.is_(None)).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Fotoquadrado não encontrado")
+    item.deleted_at = _dt.utcnow()
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return {"success": True, "deleted": item_id}
+
+
+@router.post("/api/campanhas/{campanha_id}/envio-lote")
+@router.post("/api/campanhas/{campanha_id}/coletas/lote")
+def post_envio_lote(campanha_id: str, payload: EnvioLoteCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_active_user)):
+    campanha = ensure_campanha_exists(campanha_id, db)
+    created_refs: List[tuple[str, int]] = []
+    station_results: List[Dict[str, Any]] = []
+
+    try:
+        for estacao_payload in payload.estacoes:
+            estacao_result = {
+                "estacao_amostral_id": estacao_payload.estacao_amostral_id,
+                "buscas_ativas": [],
+                "video_transectos": [],
+                "fotoquadrados": [],
+            }
+
+            for busca in estacao_payload.buscas_ativas:
+                item = create_busca_ativa(
+                    db,
+                    campanha.id,
+                    {
+                        **busca.model_dump(),
+                        "estacao_amostral_id": estacao_payload.estacao_amostral_id,
+                    },
+                )
+                created_refs.append(("busca", item.id))
+                estacao_result["buscas_ativas"].append(item.id)
+
+            for video in estacao_payload.video_transectos:
+                item = create_video_transecto(
+                    db,
+                    campanha.id,
+                    {
+                        **video.model_dump(),
+                        "estacao_amostral_id": estacao_payload.estacao_amostral_id,
+                    },
+                )
+                created_refs.append(("video", item.id))
+                estacao_result["video_transectos"].append(item.id)
+
+            for foto in estacao_payload.fotoquadrados:
+                item = create_fotoquadrado(
+                    db,
+                    campanha.id,
+                    {
+                        **foto.model_dump(),
+                        "estacao_amostral_id": estacao_payload.estacao_amostral_id,
+                    },
+                )
+                created_refs.append(("foto", item.id))
+                estacao_result["fotoquadrados"].append(item.id)
+
+            station_results.append(estacao_result)
+
+        db.commit()
+
+        created_payload = {
+            "estacoes": [],
+            "totais": {
+                "buscas_ativas": 0,
+                "video_transectos": 0,
+                "fotoquadrados": 0,
+            },
+        }
+
+        refs_by_id = {(model, item_id): _refresh_and_serialize(db, model, item_id) for model, item_id in created_refs}
+
+        for estacao_result in station_results:
+            station_payload = {
+                "estacao_amostral_id": estacao_result["estacao_amostral_id"],
+                "buscas_ativas": [refs_by_id[("busca", item_id)] for item_id in estacao_result["buscas_ativas"]],
+                "video_transectos": [refs_by_id[("video", item_id)] for item_id in estacao_result["video_transectos"]],
+                "fotoquadrados": [refs_by_id[("foto", item_id)] for item_id in estacao_result["fotoquadrados"]],
+            }
+            created_payload["totais"]["buscas_ativas"] += len(station_payload["buscas_ativas"])
+            created_payload["totais"]["video_transectos"] += len(station_payload["video_transectos"])
+            created_payload["totais"]["fotoquadrados"] += len(station_payload["fotoquadrados"])
+            created_payload["estacoes"].append(station_payload)
+
+        return created_payload
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

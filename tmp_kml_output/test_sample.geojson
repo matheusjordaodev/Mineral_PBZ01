@@ -1,0 +1,40 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.0822035425683,
+          37.42228990140251
+        ]
+      },
+      "properties": {
+        "name": "Test Point 1",
+        "description": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.0822035425683,
+          37.42228990140251
+        ]
+      },
+      "properties": {
+        "name": "Test Point 2",
+        "description": ""
+      }
+    }
+  ],
+  "metadata": {
+    "document_name": "Test KML",
+    "description": null,
+    "namespace": "http://www.opengis.net/kml/2.2",
+    "placemark_count": 2,
+    "valid_feature_count": 2
+  }
+}

@@ -1,141 +1,172 @@
-
-import json
 import http.client
-import urllib.parse
+import json
 import sys
-import os
+import urllib.parse
 
 BASE_HOST = "localhost"
 BASE_PORT = 8080
-BASE_URL = f"http://{BASE_HOST}:{BASE_PORT}"
 
-def log(msg):
-    print(f"[TEST] {msg}")
+
+def log(message):
+    print(f"[TEST] {message}")
+
 
 def request(method, path, body=None, token=None):
-    headers = {
-        "Content-Type": "application/json"
-    }
+    headers = {"Content-Type": "application/json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    
+
     conn = http.client.HTTPConnection(BASE_HOST, BASE_PORT)
-    
-    json_body = json.dumps(body) if body else None
-    conn.request(method, path, body=json_body, headers=headers)
-    
-    resp = conn.getresponse()
-    resp_data = resp.read().decode('utf-8')
+    payload = json.dumps(body) if body is not None else None
+    conn.request(method, path, body=payload, headers=headers)
+    response = conn.getresponse()
+    raw = response.read().decode("utf-8")
     conn.close()
-    
+
     try:
-        return resp.status, json.loads(resp_data)
+        return response.status, json.loads(raw)
     except json.JSONDecodeError:
-        return resp.status, resp_data
+        return response.status, raw
 
-def run_test():
-    log("Starting Questionnaire Workflow Test...")
 
-    # 1. Login
-    log("Logging in as admin...")
+def login():
     conn = http.client.HTTPConnection(BASE_HOST, BASE_PORT)
-    params = urllib.parse.urlencode({'username': 'admin', 'password': 'admin'})
+    params = urllib.parse.urlencode({"username": "admin", "password": "admin"})
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
     conn.request("POST", "/api/login", params, headers)
-    resp = conn.getresponse()
-    if resp.status != 200:
-        log(f"Login failed: {resp.status} {resp.read()}")
-        sys.exit(1)
-    
-    auth_data = json.loads(resp.read().decode('utf-8'))
-    token = auth_data['access_token']
-    log("Login successful.")
+    response = conn.getresponse()
+    raw = response.read().decode("utf-8")
+    conn.close()
 
-    # 2. Get ILHAS
-    log("Fetching islands...")
-    status, data = request("GET", "/api/ilhas", token=token)
-    if status != 200 or not data['ilhas']:
-        log(f"Failed to fetch islands or no islands found: {status}")
-        sys.exit(1)
-    
-    ilha_id = data['ilhas'][0]['id']
-    log(f"Using Ilha ID: {ilha_id}")
+    if response.status != 200:
+        raise RuntimeError(f"Login failed: {response.status} {raw}")
+    return json.loads(raw)["access_token"]
 
-    # 3. Create Campaign
-    log("Creating test campaign...")
+
+def run_test():
+    log("Starting questionnaire consistency test")
+    token = login()
+    log("Login successful")
+
+    status, islands_payload = request("GET", "/api/ilhas", token=token)
+    if status != 200 or not islands_payload.get("ilhas"):
+        raise RuntimeError(f"Failed to load islands: {status} {islands_payload}")
+
+    ilha = islands_payload["ilhas"][0]
+    espacos = ilha.get("espacos_amostrais") or []
+    if not espacos:
+        raise RuntimeError("No sampling spaces available for the selected island")
+
+    espaco = espacos[0]
     campanha_payload = {
-        "ilha_id": str(ilha_id),
-        "nome": "Test Campaign Automated",
-        "data": "2025-01-01",
-        "descricao": "Automated test campaign"
+        "ilhas": [
+            {
+                "ilha_id": ilha["id"],
+                "selecao": [
+                    {
+                        "espaco_amostral_id": espaco["id"],
+                        "pontos": [1],
+                    }
+                ],
+            }
+        ],
+        "nome": "MASC 01",
+        "data": "2026-03-13",
+        "descricao": "Automated consistency test",
+        "base_apoio_id": None,
+        "embarcacao_id": None,
+        "membros_equipe": [],
     }
-    status, data = request("POST", "/api/campanhas", campanha_payload, token)
-    if status != 200:
-        log(f"Failed to create campaign: {status} {data}")
-        sys.exit(1)
-    
-    campanha_id = data['campanha']['id']
-    log(f"Campaign created. ID: {campanha_id}")
 
-    # 4. Helper to create hidden station
-    # The frontend does this: create station -> create method
-    # We will simulate this.
-    log("Creating hidden station for Busca Ativa...")
-    station_payload = {
-        "campanha_id": campanha_id,
-        "data": "2025-01-01",
-        "hora": "12:00:00",
-        "observacoes": "Automated Test Station"
+    status, campanha_response = request("POST", "/api/campanhas", campanha_payload, token)
+    if status != 200:
+        raise RuntimeError(f"Failed to create campaign: {status} {campanha_response}")
+
+    campanha_id = campanha_response["campanha"]["id"]
+    log(f"Campaign created: {campanha_id}")
+
+    status, stations_response = request("GET", f"/api/campanhas/{campanha_id}/estacoes", token=token)
+    if status != 200 or not isinstance(stations_response, list) or not stations_response:
+        raise RuntimeError(f"Failed to load campaign stations: {status} {stations_response}")
+
+    station = stations_response[0]
+    station_id = station["id"]
+    log(f"Using station {station_id}")
+
+    batch_payload = {
+        "estacoes": [
+            {
+                "estacao_amostral_id": station_id,
+                "buscas_ativas": [
+                    {
+                        "numero_busca": 1,
+                        "data_hora_inicio": "2026-03-13T09:00:00",
+                        "data_hora_fim": "2026-03-13T09:20:00",
+                        "profundidade_inicial": 12.5,
+                        "profundidade_final": 8.0,
+                        "temperatura_inicial": 24.2,
+                        "temperatura_final": 23.8,
+                        "visibilidade_vertical": 7.0,
+                        "visibilidade_horizontal": 10.0,
+                        "encontrou_coral_sol": False,
+                        "imagens": ["https://example.com/busca-1.jpg"],
+                    }
+                ],
+                "video_transectos": [
+                    {
+                        "data_hora": "2026-03-13T10:00:00",
+                        "video_url": "https://example.com/video-1.mp4",
+                        "profundidade_inicial": 9.0,
+                        "profundidade_final": 6.0,
+                    }
+                ],
+                "fotoquadrados": [
+                    {
+                        "data_hora": "2026-03-13T11:00:00",
+                        "imagem_mosaico_url": "https://example.com/foto-mosaico.jpg",
+                        "imagens_complementares": [
+                            "https://example.com/foto-1.jpg",
+                            "https://example.com/foto-2.jpg",
+                        ],
+                        "profundidade": 7.5,
+                        "temperatura": 23.4,
+                    }
+                ],
+            }
+        ]
     }
-    status, data = request("POST", "/api/estacoes", station_payload, token)
-    if status != 200:
-        log(f"Failed to create station: {status} {data}")
-        sys.exit(1)
-    
-    station_id = data['id']
-    log(f"Station created. ID: {station_id}")
 
-    # 5. Create Busca Ativa
-    log("Creating Busca Ativa...")
-    busca_payload = {
-        "estacao_amostral_id": station_id,
-        "numero_busca": 1,
-        "data": "2025-01-01",
-        "hora_inicio": "12:00:00",
-        "duracao": "00:30:00",
-        "profundidade_inicial": 10.5,
-        "profundidade_final": 5.0,
-        "encontrou_coral_sol": True,
-        "planilha_excel_url": "http://test.com/sheet.xlsx",
-        "dados_meteo": "Vento SE" # Test string to JSON conversion
-    }
-    status, data = request("POST", "/api/buscas-ativas", busca_payload, token)
+    status, batch_response = request(
+        "POST",
+        f"/api/campanhas/{campanha_id}/envio-lote",
+        batch_payload,
+        token,
+    )
     if status != 200:
-        log(f"Failed to create Busca Ativa: {status} {data}")
-        sys.exit(1)
-    log("Busca Ativa created.")
+        raise RuntimeError(f"Batch submission failed: {status} {batch_response}")
 
-    # 6. Verify Methods
-    log("Verifying methods list...")
-    status, data = request("GET", f"/api/campanhas/{campanha_id}/metodos", token=token)
+    totals = batch_response.get("totais") or {}
+    if totals.get("buscas_ativas") != 1 or totals.get("video_transectos") != 1 or totals.get("fotoquadrados") != 1:
+        raise RuntimeError(f"Unexpected batch totals: {batch_response}")
+    log("Batch submission completed")
+
+    status, methods_response = request("GET", f"/api/campanhas/{campanha_id}/metodos", token=token)
     if status != 200:
-        log(f"Failed to fetch methods: {status} {data}")
-        sys.exit(1)
-    
-    buscas = data.get('buscas', [])
-    if len(buscas) > 0 and buscas[0]['estacao_id'] == station_id:
-        log("✓ Validation Successful: Busca Ativa found in campaign methods.")
-        # Optional: could inspect DB content if the endpoint returned details, but list endpoint is summary.
-        # To be sure, let's fetch specific detail endpoint if it existed, but for now we trust the CREATE 200 OK.
-    else:
-        log("✗ Validation Failed: Busca Ativa not found.")
-        sys.exit(1)
+        raise RuntimeError(f"Failed to load methods summary: {status} {methods_response}")
 
-    log("TEST COMPLETE SUCCESS")
+    if len(methods_response.get("buscas", [])) != 1:
+        raise RuntimeError(f"Busca count mismatch: {methods_response}")
+    if len(methods_response.get("videos", [])) != 1:
+        raise RuntimeError(f"Video count mismatch: {methods_response}")
+    if len(methods_response.get("fotos", [])) != 1:
+        raise RuntimeError(f"Foto count mismatch: {methods_response}")
+
+    log("Consistency test completed successfully")
+
 
 if __name__ == "__main__":
     try:
         run_test()
-    except Exception as e:
-        print(f"Test failed with exception: {e}")
+    except Exception as exc:
+        print(f"Test failed with exception: {exc}")
         sys.exit(1)

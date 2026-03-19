@@ -54,9 +54,47 @@
                         Campanha
                     </h4>
                     <ul id="campaignDetailFiles" class="mock-list" style="max-height: 150px; overflow-y: auto;">
-                        <!-- Files populated by JS -->
                         <li style="color: #777;">Carregando arquivos...</li>
                     </ul>
+                </div>
+
+                <!-- Admin: Edit Campaign Section -->
+                <div id="cdAdminEditSection" style="display:none;">
+                    <div class="mock-section" style="background: #fffbf0; border: 1px solid #f0c040; margin-bottom: 20px;">
+                        <h4 style="color: #b07d00; border-bottom: 1px solid #f0c040; padding-bottom: 5px;">✏️ Editar Campanha</h4>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:14px;">
+                            <div>
+                                <label style="display:block; font-weight:600; margin-bottom:4px;">Nome</label>
+                                <input id="cdEditNome" type="text" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="display:block; font-weight:600; margin-bottom:4px;">Data</label>
+                                <input id="cdEditData" type="date" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="display:block; font-weight:600; margin-bottom:4px;">Status</label>
+                                <select id="cdEditStatus" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+                                    <option value="ativa">Ativa</option>
+                                    <option value="concluida">Concluída</option>
+                                    <option value="cancelada">Cancelada</option>
+                                    <option value="planejada">Planejada</option>
+                                </select>
+                            </div>
+                            <div style="grid-column: span 2;">
+                                <label style="display:block; font-weight:600; margin-bottom:4px;">Descrição</label>
+                                <textarea id="cdEditDesc" rows="3" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; resize:vertical;"></textarea>
+                            </div>
+                        </div>
+                        <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+                            <button id="cdEditSaveBtn" onclick="cdSaveCampanha()" style="padding:7px 18px; background:#0f8bb3; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:600;">Salvar</button>
+                            <button onclick="cdCancelEditCampanha()" style="padding:7px 18px; background:#eee; color:#333; border:1px solid #ccc; border-radius:4px; cursor:pointer;">Cancelar</button>
+                            <button onclick="cdDeleteCampanha()" style="padding:7px 18px; background:#e53935; color:#fff; border:none; border-radius:4px; cursor:pointer; margin-left:auto;">🗑 Excluir Campanha</button>
+                            <span id="cdEditMsg" style="font-size:13px; color:green; display:none;"></span>
+                        </div>
+                    </div>
+                </div>
+                <div id="cdAdminEditToggle" style="display:none; text-align:right; margin-bottom:8px;">
+                    <button onclick="cdToggleEditCampanha()" style="padding:5px 14px; background:#f0c040; color:#333; border:none; border-radius:4px; cursor:pointer; font-weight:600; font-size:13px;">✏️ Editar Campanha</button>
                 </div>
             </div>
 
@@ -70,16 +108,18 @@
                                 <th>Est.</th>
                                 <th>Busca #</th>
                                 <th>Hora</th>
+                                <th>Duração</th>
                                 <th>Prof (m)</th>
+                                <th>Temp (°C)</th>
+                                <th>Vis (m)</th>
                                 <th>Coral-sol?</th>
+                                <th>Meteo</th>
+                                <th>Arquivos</th>
+                                <th class="cd-admin-col" style="display:none;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="cdBuscaBody">
-                            <tr>
-                                <td colspan="5">Carregando...</td>
-                            <tr>
-                                <td colspan="10">Carregando...</td>
-                            </tr>
+                            <tr><td colspan="11">Carregando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -102,12 +142,11 @@
                                 <th>Jaccard</th>
                                 <th>Meteo</th>
                                 <th>Vídeo</th>
+                                <th class="cd-admin-col" style="display:none;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="cdVideoBody">
-                            <tr>
-                                <td colspan="10">Carregando...</td>
-                            </tr>
+                            <tr><td colspan="11">Carregando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -129,12 +168,11 @@
                                 <th>Shannon</th>
                                 <th>Meteo</th>
                                 <th>Mosaico</th>
+                                <th class="cd-admin-col" style="display:none;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="cdFotoBody">
-                            <tr>
-                                <td colspan="9">Carregando...</td>
-                            </tr>
+                            <tr><td colspan="10">Carregando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -192,9 +230,146 @@
         font-weight: 600;
         color: #555;
     }
+
+    .cd-action-btn {
+        padding: 3px 8px;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 0 2px;
+    }
+    .cd-action-btn.del { background: #e53935; color: #fff; }
+    .cd-action-btn.del:hover { background: #b71c1c; }
 </style>
 
 <script>
+    var _cdCtx = {};  // stores current modal context: campanhaId, ilhaId, campanhaNome, ilhaIdsArray, data
+
+    function cdIsAdmin() {
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) return false;
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.perfil === 'admin';
+        } catch (e) { return false; }
+    }
+
+    function cdApplyAdminUI() {
+        const isAdmin = cdIsAdmin();
+        document.querySelectorAll('.cd-admin-col').forEach(el => {
+            el.style.display = isAdmin ? '' : 'none';
+        });
+        const editToggle = document.getElementById('cdAdminEditToggle');
+        if (editToggle) editToggle.style.display = isAdmin ? 'block' : 'none';
+    }
+
+    function cdToggleEditCampanha() {
+        const sec = document.getElementById('cdAdminEditSection');
+        const isVisible = sec.style.display !== 'none';
+        if (!isVisible) {
+            // Populate with current values
+            document.getElementById('cdEditNome').value = _cdCtx.nome || '';
+            document.getElementById('cdEditData').value = _cdCtx.data || '';
+            document.getElementById('cdEditStatus').value = _cdCtx.status || 'ativa';
+            document.getElementById('cdEditDesc').value = _cdCtx.desc || '';
+            document.getElementById('cdEditMsg').style.display = 'none';
+        }
+        sec.style.display = isVisible ? 'none' : 'block';
+    }
+
+    function cdCancelEditCampanha() {
+        document.getElementById('cdAdminEditSection').style.display = 'none';
+    }
+
+    async function cdSaveCampanha() {
+        const btn = document.getElementById('cdEditSaveBtn');
+        const msg = document.getElementById('cdEditMsg');
+        btn.disabled = true;
+        btn.textContent = 'Salvando...';
+        msg.style.display = 'none';
+        try {
+            const resp = await fetch(`/api/campanhas/${_cdCtx.campanhaId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('authToken') || '') },
+                body: JSON.stringify({
+                    nome: document.getElementById('cdEditNome').value,
+                    data: document.getElementById('cdEditData').value,
+                    status: document.getElementById('cdEditStatus').value,
+                    descricao: document.getElementById('cdEditDesc').value,
+                })
+            });
+            const result = await resp.json();
+            if (resp.ok && result.success) {
+                const c = result.campanha;
+                _cdCtx.nome = c.nome;
+                _cdCtx.data = c.data;
+                _cdCtx.status = c.status;
+                _cdCtx.desc = c.descricao;
+                document.getElementById('cdNome').textContent = c.nome;
+                document.getElementById('cdData').textContent = c.data || '';
+                document.getElementById('cdStatus').textContent = c.status || '';
+                document.getElementById('cdDesc').textContent = c.descricao || '';
+                document.getElementById('campaignDetailTitle').textContent = c.nome;
+                msg.style.color = 'green';
+                msg.textContent = '✓ Salvo';
+                msg.style.display = 'inline';
+                setTimeout(() => { msg.style.display = 'none'; }, 2000);
+                if (typeof loadCampanhas === 'function') loadCampanhas();
+            } else {
+                throw new Error(result.detail || 'Erro ao salvar');
+            }
+        } catch (e) {
+            msg.style.color = 'red';
+            msg.textContent = '✗ ' + e.message;
+            msg.style.display = 'inline';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Salvar';
+        }
+    }
+
+    async function cdDeleteCampanha() {
+        if (!confirm(`Excluir campanha "${_cdCtx.nome}"?\nEsta ação não pode ser desfeita.`)) return;
+        try {
+            const resp = await fetch(`/api/campanhas/${_cdCtx.campanhaId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('authToken') || '') }
+            });
+            if (resp.ok) {
+                closeCampaignDetailsModal();
+                if (typeof loadCampanhas === 'function') loadCampanhas();
+                if (typeof applyCampanhaFilter === 'function') applyCampanhaFilter();
+            } else {
+                const r = await resp.json();
+                showToast('Erro: ' + (r.detail || 'Falha ao excluir'), 'error');
+            }
+        } catch (e) {
+            showToast('Erro: ' + e.message, 'error');
+        }
+    }
+
+    async function cdDeleteRecord(type, id, rowEl) {
+        const labels = { busca: 'busca ativa', video: 'vídeo transecto', foto: 'fotoquadrado' };
+        if (!confirm(`Excluir este registro de ${labels[type] || type}?`)) return;
+        const endpoints = { busca: 'busca-ativa', video: 'video-transectos', foto: 'fotoquadrados' };
+        try {
+            const resp = await fetch(`/api/${endpoints[type]}/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('authToken') || '') }
+            });
+            if (resp.ok) {
+                if (rowEl) rowEl.remove();
+            } else {
+                const r = await resp.json();
+                showToast('Erro: ' + (r.detail || 'Falha ao excluir'), 'error');
+            }
+        } catch (e) {
+            showToast('Erro: ' + e.message, 'error');
+        }
+    }
+
     function closeCampaignDetailsModal() {
         document.getElementById('campaignDetailsModal').style.display = 'none';
     }
@@ -224,9 +399,30 @@
         }
     }
 
-    async function openCampaignDetails(campanhaId, ilhaId, campanhaNome) {
+    async function openCampaignDetails(campanhaId, ilhaId, campanhaNome, ilhaIdsArray) {
+        _cdCtx = { campanhaId, ilhaId, campanhaNome, ilhaIdsArray, nome: campanhaNome };
         document.getElementById('campaignDetailsModal').style.display = 'flex';
         document.getElementById('campaignDetailTitle').textContent = campanhaNome || "Detalhes da Campanha";
+        document.getElementById('cdAdminEditSection').style.display = 'none';
+        cdApplyAdminUI();
+
+        // Botão "Ver no Mapa" no header
+        let verMapaBtn = document.getElementById('cdVerMapaBtn');
+        if (!verMapaBtn) {
+            verMapaBtn = document.createElement('button');
+            verMapaBtn.id = 'cdVerMapaBtn';
+            verMapaBtn.style.cssText = 'padding:5px 10px; background:#0f8bb3; color:#fff; border:none; border-radius:5px; cursor:pointer; font-size:12px; font-weight:600; margin-right:8px;';
+            verMapaBtn.textContent = '🗺 Ver no Mapa';
+            const closeBtn = document.querySelector('#campaignDetailsModal .modal-card > div:first-child button');
+            if (closeBtn) closeBtn.parentNode.insertBefore(verMapaBtn, closeBtn);
+        }
+        verMapaBtn.onclick = function () {
+            const ids = Array.isArray(ilhaIdsArray) && ilhaIdsArray.length ? ilhaIdsArray : (ilhaId ? [ilhaId] : []);
+            closeCampaignDetailsModal();
+            if (typeof loadCampaignGeoOnMap === 'function') {
+                loadCampaignGeoOnMap(campanhaId, ids, campanhaNome);
+            }
+        };
 
         // Reset contents & Switch to Geral
         switchCdTab('geral');
@@ -254,6 +450,24 @@
             // For proper "details" like description/team, we might need to fetch the list again or look it up from the global list in memory.
             // For now, let's just assume we pass the basic info or I'll implement a simple lookup if needed.
             // Optimization: Fetch the files and media which are independent.
+
+            // Fetch campaign details to populate general info
+            fetch(`/api/campanhas/${campanhaId}`)
+                .then(r => r.ok ? r.json() : null)
+                .then(c => {
+                    if (!c) return;
+                    const dataStr = c.data ? (typeof c.data === 'string' ? c.data : new Date(c.data).toISOString().slice(0,10)) : '';
+                    document.getElementById('cdNome').textContent = c.nome || campanhaNome;
+                    document.getElementById('cdIlha').textContent = (c.ilha_nomes || []).join(', ') || ('ID: ' + ilhaId);
+                    document.getElementById('cdData').textContent = dataStr;
+                    document.getElementById('cdStatus').textContent = c.status || '';
+                    document.getElementById('cdDesc').textContent = c.descricao || '';
+                    _cdCtx.nome = c.nome || campanhaNome;
+                    _cdCtx.data = dataStr;
+                    _cdCtx.status = c.status || '';
+                    _cdCtx.desc = c.descricao || '';
+                })
+                .catch(() => {});
 
             // Set basic info we have (passed from caller)
             document.getElementById('cdNome').textContent = campanhaNome;
@@ -284,41 +498,60 @@
                 document.getElementById('campaignDetailFiles').innerHTML = '<li style="color: red;">Erro ao carregar arquivos.</li>';
             });
 
-            // Fetch Media
-            fetch(`/api/campanhas/${campanhaId}/media-list?ilha_id=${ilhaId}`).then(r => r.json()).then(mediaData => {
-                const gallery = document.getElementById('campaignDetailGallery');
-                gallery.innerHTML = '';
-                if (mediaData.media.length === 0) {
-                    gallery.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #777;">Nenhuma mídia encontrada.</div>';
-                } else {
-                    mediaData.media.forEach(m => {
-                        const div = document.createElement('div');
-                        div.className = 'mock-thumb';
-                        div.style.height = '100px';
-                        div.style.cursor = 'pointer';
+            // Fetch Media — coleta de todas as ilhas da campanha
+            const allIlhaIds = Array.isArray(ilhaIdsArray) && ilhaIdsArray.length ? ilhaIdsArray : (ilhaId ? [ilhaId] : []);
+            const gallery = document.getElementById('campaignDetailGallery');
 
-                        // Check extension
-                        const isVideo = m.url.match(/\.(mp4|mov|avi)$/i);
-
-                        if (isVideo) {
-                            div.innerHTML = `<video src="${m.url}" style="width:100%; height:100%; object-fit:cover;"></video><span style="position:absolute; top:5px; right:5px; background:rgba(0,0,0,0.6); color:#fff; padding:2px 5px; font-size:10px; border-radius:3px;">▶ Vídeo</span>`;
-                            div.onclick = () => window.open(m.url, '_blank'); // Simple video player
-                        } else {
-                            div.innerHTML = `<img src="${m.url}" style="width:100%; height:100%; object-fit:cover;" />`;
-                            div.onclick = () => {
-                                // Simple lightbox
-                                const lightbox = document.getElementById('lightbox');
-                                const content = document.getElementById('lightboxContent');
-                                content.innerHTML = `<img src="${m.url}" style="max-width:100%; max-height:80vh;" />`;
-                                lightbox.style.display = 'flex';
-                            };
-                        }
-                        gallery.appendChild(div);
-                    });
+            Promise.all(
+                allIlhaIds.map(iid =>
+                    fetch(`/api/campanhas/${campanhaId}/media-list?ilha_id=${iid}`)
+                        .then(r => r.ok ? r.json() : { media: [] })
+                        .catch(() => ({ media: [] }))
+                )
+            ).then(results => {
+                const seenUrls = new Set();
+                const allMedia = [];
+                for (const res of results) {
+                    for (const m of (res.media || [])) {
+                        const u = m.url || m;
+                        if (!seenUrls.has(u)) { seenUrls.add(u); allMedia.push(m); }
+                    }
                 }
+
+                gallery.innerHTML = '';
+                if (!allMedia.length) {
+                    gallery.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #777;">Nenhuma mídia encontrada.</div>';
+                    return;
+                }
+
+                // Lista de urls para o lightbox
+                const mediaUrls = allMedia.map(m => ({ url: m.url || m, label: m.nome || '' }));
+
+                allMedia.forEach((m, idx) => {
+                    const url = m.url || m;
+                    const div = document.createElement('div');
+                    div.className = 'mock-thumb';
+                    div.style.cssText = 'height:100px; cursor:pointer; border-radius:6px; overflow:hidden; position:relative;';
+
+                    const isVideo = /\.(mp4|mov|avi|webm)$/i.test(url);
+                    if (isVideo) {
+                        div.innerHTML = `<video src="${url}" style="width:100%; height:100%; object-fit:cover;" muted></video><span style="position:absolute; top:4px; right:4px; background:rgba(0,0,0,0.65); color:#fff; padding:2px 5px; font-size:10px; border-radius:3px;">▶</span>`;
+                        div.onclick = () => window.open(url, '_blank');
+                    } else {
+                        div.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" />`;
+                        div.onclick = () => {
+                            if (typeof openLightboxGaleria === 'function') {
+                                openLightboxGaleria(mediaUrls, idx);
+                            } else {
+                                window.open(url, '_blank');
+                            }
+                        };
+                    }
+                    gallery.appendChild(div);
+                });
             }).catch(e => {
                 console.error("Error loading media", e);
-                document.getElementById('campaignDetailGallery').innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: red;">Erro ao carregar mídia.</div>';
+                gallery.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: red;">Erro ao carregar mídia.</div>';
             });
 
             // 2. Fetch Full Details (New Logic)
@@ -329,13 +562,23 @@
                 // Helper for Meteo JSON
                 const fmtMeteo = (m) => m ? `<span title="${JSON.stringify(m)}">☁️</span>` : '-';
                 const fmtFile = (url, icon) => url ? `<a href="${url}" target="_blank">${icon}</a>` : '-';
+                const fmtVideo = (url) => {
+                    if (!url) return '-';
+                    return `<video src="${url}" controls style="max-width:220px; max-height:120px; border-radius:4px; background:#000;" preload="metadata">
+                        <a href="${url}" target="_blank">🎥 Abrir vídeo</a>
+                    </video>`;
+                };
+
+                const isAdmin = cdIsAdmin();
+                const adminTd = isAdmin ? `<td class="cd-admin-col">` : `<td class="cd-admin-col" style="display:none;">`;
 
                 // Populate Busca Ativa
                 const buscaBody = document.getElementById('cdBuscaBody');
                 buscaBody.innerHTML = '';
-                if (data.buscas.length === 0) buscaBody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#999;">Nenhum registro encontrado.</td></tr>';
+                if (data.buscas.length === 0) buscaBody.innerHTML = '<tr><td colspan="11" style="text-align:center; color:#999;">Nenhum registro encontrado.</td></tr>';
                 else data.buscas.forEach(b => {
-                    const row = `<tr>
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
                         <td>${b.estacao}</td>
                         <td>${b.numero_busca || '-'}</td>
                         <td>${b.hora_inicio || '-'}</td>
@@ -343,22 +586,20 @@
                         <td>${b.prof_ini || '-'} a ${b.prof_fim || '-'}</td>
                         <td>${b.temp_ini || '-'} a ${b.temp_fim || '-'}</td>
                         <td>↕${b.vis_vert || '-'} ↔${b.vis_hor || '-'}</td>
-                        <td>${b.encontrou_coralsol ? '<span style="color:red; font-weight:bold;">SIM</span>' : 'Não'}</td>
+                        <td>${b.encontrou_coralsol ? '<span style="color:red;font-weight:bold;">SIM</span>' : 'Não'}</td>
                         <td style="text-align:center;">${fmtMeteo(b.dados_meteo)}</td>
-                        <td>
-                            ${fmtFile(b.excel_url, '📊')}
-                            ${fmtFile(b.track_url, '🗺️')}
-                        </td>
-                    </tr>`;
-                    buscaBody.innerHTML += row;
+                        <td>${fmtFile(b.excel_url, '📊')} ${fmtFile(b.track_url, '🗺️')}</td>
+                        ${adminTd}<button class="cd-action-btn del" onclick="cdDeleteRecord('busca',${b.id},this.closest('tr'))">🗑</button></td>`;
+                    buscaBody.appendChild(tr);
                 });
 
                 // Populate Video
                 const videoBody = document.getElementById('cdVideoBody');
                 videoBody.innerHTML = '';
-                if (data.videos.length === 0) videoBody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#999;">Nenhum registro encontrado.</td></tr>';
+                if (data.videos.length === 0) videoBody.innerHTML = '<tr><td colspan="11" style="text-align:center; color:#999;">Nenhum registro encontrado.</td></tr>';
                 else data.videos.forEach(v => {
-                    const row = `<tr>
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
                         <td>${v.estacao}</td>
                         <td>${v.hora || '-'}</td>
                         <td>${v.prof_ini || '-'} a ${v.prof_fim || '-'}</td>
@@ -368,17 +609,18 @@
                         <td>${v.shannon || '-'}</td>
                         <td>${v.jaccard || '-'}</td>
                         <td style="text-align:center;">${fmtMeteo(v.dados_meteo)}</td>
-                        <td style="text-align:center;">${fmtFile(v.video_url, '🎥')}</td>
-                    </tr>`;
-                    videoBody.innerHTML += row;
+                        <td style="text-align:center;">${fmtVideo(v.video_url)}</td>
+                        ${adminTd}<button class="cd-action-btn del" onclick="cdDeleteRecord('video',${v.id},this.closest('tr'))">🗑</button></td>`;
+                    videoBody.appendChild(tr);
                 });
 
                 // Populate Foto
                 const fotoBody = document.getElementById('cdFotoBody');
                 fotoBody.innerHTML = '';
-                if (data.fotos.length === 0) fotoBody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#999;">Nenhum registro encontrado.</td></tr>';
+                if (data.fotos.length === 0) fotoBody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#999;">Nenhum registro encontrado.</td></tr>';
                 else data.fotos.forEach(f => {
-                    const row = `<tr>
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
                         <td>${f.estacao}</td>
                         <td>${f.hora || '-'}</td>
                         <td>${f.profundidade || '-'}</td>
@@ -388,8 +630,8 @@
                         <td>${f.shannon || '-'}</td>
                         <td style="text-align:center;">${fmtMeteo(f.dados_meteo)}</td>
                         <td style="text-align:center;">${fmtFile(f.mosaico_url, '🖼️')}</td>
-                    </tr>`;
-                    fotoBody.innerHTML += row;
+                        ${adminTd}<button class="cd-action-btn del" onclick="cdDeleteRecord('foto',${f.id},this.closest('tr'))">🗑</button></td>`;
+                    fotoBody.appendChild(tr);
                 });
 
             } else {

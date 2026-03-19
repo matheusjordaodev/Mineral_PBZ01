@@ -21,17 +21,23 @@ class AzureBlobService:
 
     def _ensure_container_exists(self):
         try:
-            from azure.storage.blob import PublicAccess
             container_client = self.blob_service_client.get_container_client(self.container_name)
             if not container_client.exists():
-                container_client.create_container(public_access=PublicAccess.Blob)
-            else:
-                # If it exists, ensure the access policy is set to Blob
-                container_properties = container_client.get_container_properties()
-                if container_properties.public_access != PublicAccess.Blob:
-                    container_client.set_container_access_policy(signed_identifiers={}, public_access=PublicAccess.Blob)
+                try:
+                    from azure.storage.blob import PublicAccess
+                    container_client.create_container(public_access=PublicAccess.Blob)
+                    print(f"Container '{self.container_name}' created with public access.")
+                except Exception:
+                    try:
+                        # Storage Account may have anonymous access disabled; create without public access
+                        container_client.create_container()
+                        print(f"Container '{self.container_name}' created without public access.")
+                    except Exception as ce:
+                        print(f"Error creating container '{self.container_name}': {ce}")
+                        raise
         except Exception as e:
             print(f"Error ensuring container exists: {e}")
+            raise
 
     def upload_file(self, file_data: Any, blob_name: str, content_type: str = None) -> str:
         """
@@ -46,9 +52,23 @@ class AzureBlobService:
             my_content_settings = ContentSettings(content_type=content_type) if content_type else None
 
             blob_client.upload_blob(file_data, overwrite=True, content_settings=my_content_settings)
-            
+
             return blob_client.url
         except Exception as e:
+            error_str = str(e)
+            if "ContainerNotFound" in error_str or "container does not exist" in error_str.lower():
+                # Container missing at upload time — try to create it and retry once
+                try:
+                    self._ensure_container_exists()
+                    if hasattr(file_data, 'seek'):
+                        file_data.seek(0)
+                    blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=blob_name)
+                    my_content_settings = ContentSettings(content_type=content_type) if content_type else None
+                    blob_client.upload_blob(file_data, overwrite=True, content_settings=my_content_settings)
+                    return blob_client.url
+                except Exception as retry_e:
+                    print(f"Error uploading file to Azure after container creation: {retry_e}")
+                    raise retry_e
             print(f"Error uploading file to Azure: {e}")
             raise e
 

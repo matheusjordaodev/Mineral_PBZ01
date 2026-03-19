@@ -13,6 +13,14 @@ from services.azure_blob_service import AzureBlobService
 
 GEOSPATIAL_EXTENSIONS = {".kml", ".kmz", ".geojson", ".json", ".shp", ".zip"}
 MEDIA_EXTENSIONS = {".jpg", ".jpeg", ".png", ".mp4", ".mov", ".avi"}
+MEDIA_CONTENT_TYPES = {
+    ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
+    ".mp4": "video/mp4", ".mov": "video/quicktime", ".avi": "video/x-msvideo",
+}
+
+# Limite de tamanho para uploads geoespaciais (padrão 50 MB, configurável via env)
+import os as _os
+MAX_GEOSPATIAL_MB = float(_os.getenv("MAX_GEOSPATIAL_FILE_MB", "50"))
 
 
 class FileService:
@@ -46,7 +54,16 @@ class FileService:
 
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file_data, buffer)
-        
+
+        # Verifica tamanho após salvar
+        file_size_mb = file_path.stat().st_size / (1024 * 1024)
+        if file_size_mb > MAX_GEOSPATIAL_MB:
+            file_path.unlink(missing_ok=True)
+            raise ValueError(
+                f"Arquivo muito grande ({file_size_mb:.1f} MB). "
+                f"Tamanho máximo permitido: {MAX_GEOSPATIAL_MB:.0f} MB"
+            )
+
         # Extract KMZ locally
         if file_ext == ".kmz":
             try:
@@ -107,7 +124,8 @@ class FileService:
                         except:
                             pass
                     
-                    file_url = self.azure_service.upload_file(file_data, blob_name)
+                    content_type = MEDIA_CONTENT_TYPES.get(file_ext)
+                    file_url = self.azure_service.upload_file(file_data, blob_name, content_type=content_type)
                     
                 except Exception as e:
                     print(f"Error uploading {filename} to Azure: {e}")
@@ -126,6 +144,32 @@ class FileService:
             })
         
         return uploaded_files
+
+    def _list_media_blobs(self, ilha_id: str, campanha_id: str) -> List[Dict[str, Any]]:
+        if not self.azure_service:
+            return []
+
+        prefix = f"{ilha_id}/{campanha_id}/media/"
+        container_client = self.azure_service.blob_service_client.get_container_client(
+            self.azure_service.container_name
+        )
+
+        files = []
+        for blob in container_client.list_blobs(name_starts_with=prefix):
+            blob_name = blob.name or ""
+            filename = Path(blob_name).name
+            blob_client = container_client.get_blob_client(blob_name)
+            files.append(
+                {
+                    "nome": filename,
+                    "filename": filename,
+                    "tamanho": blob.size,
+                    "size": blob.size,
+                    "modificado": blob.last_modified.isoformat() if blob.last_modified else None,
+                    "url": self.azure_service.get_sas_url(blob_client.url),
+                }
+            )
+        return files
     
     def list_files(self, ilha_id: str, campanha_id: str) -> Dict[str, List[Dict[str, Any]]]:
         """List all files in a campaign. Hybrid: Local for Geo, Azure for Media."""
@@ -151,12 +195,10 @@ class FileService:
         # Note: listing form Azure is expensive/slow if many files. 
         # Ideally we should rely on DB. But if this endpoint is called for file management:
         if self.azure_service:
-            # We need to implement prefix listing in AzureService or just skip for now.
-            # The user request didn't explicitly ask for "List Files" to be fixed, just "Image Uploads".
-            # The media gallery uses DB. This `list_files` might be for the "Gerenciar Dados" file list.
-            # I'll leave media empty here or implement listing later if requested. 
-            # Consistent with "Store images in Azure".
-            pass
+            try:
+                files["media"] = self._list_media_blobs(ilha_id, campanha_id)
+            except Exception as exc:
+                print(f"Failed to list media from Azure: {exc}")
         
         return files
     
@@ -199,11 +241,11 @@ class FileService:
     
     def get_media_list(self, ilha_id: str, campanha_id: str) -> List[Dict[str, Any]]:
         """Get list of media files with URLs (Deprecated/Azure)"""
-        # This was used to list files from folder. 
-        # Since we moved to Azure, we can't glob.
-        # If this is used by the gallery, it won't return anything unless we query Azure.
-        # But the gallery is driven by DB records which use the Returned URL from upload.
-        return []
+        try:
+            return self._list_media_blobs(ilha_id, campanha_id)
+        except Exception as exc:
+            print(f"Failed to get media list from Azure: {exc}")
+            return []
 
     def get_file_path(self, ilha_id: str, campanha_id: str, tipo: str, filename: str) -> Optional[Path]:
         """Get file path for serving (Supports legacy local files)"""
