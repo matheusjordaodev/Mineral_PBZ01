@@ -1,25 +1,46 @@
 <!-- Data Management Modal -->
 <div class="modal-overlay" id="gerenciarDadosModal" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal-card" style="width: 700px; max-width: 95%;">
-        <div class="data-modal-header">
+
+        <!-- Cabeçalho: visível apenas fora do fluxo Nova Campanha -->
+        <div id="dataModalDefaultHeader" class="data-modal-header">
             <h3 class="modal-title" style="margin:0;">Registro de Dados de Campo</h3>
             <button class="data-modal-close" onclick="closeGerenciarDadosModal()">&times;</button>
         </div>
 
-        <!-- Tabs -->
-        <div class="data-modal-tabs" style="display:none;">
+        <!-- Cabeçalho simples para Nova Campanha (sem título, só fechar) -->
+        <div id="dataModalNovaCampanhaHeader" style="display:none; justify-content:flex-end; padding:8px 12px 0;">
+            <button onclick="closeGerenciarDadosModal()" style="background:none; border:none; font-size:22px; color:#888; cursor:pointer; line-height:1;">&times;</button>
+        </div>
+
+        <!-- Barra de navegação para Nova Campanha -->
+        <div id="novaCampanhaNavBar" style="display:none; gap:0; border-bottom:2px solid #e0ecf4; background:#f4f8fb;">
+            <button id="navBtnNovaCampanha" type="button" onclick="startDataFlow('new_campaign')"
+                style="padding:10px 16px; border:none; border-bottom:2px solid transparent; background:transparent; color:#36566f; font-size:12px; font-weight:700; cursor:pointer; margin-bottom:-2px;">NOVA CAMPANHA</button>
+            <button id="navBtnIlhas" type="button" onclick="switchDataTab('ilhasamostrais')"
+                style="padding:10px 16px; border:none; border-bottom:2px solid transparent; background:transparent; color:#36566f; font-size:12px; font-weight:700; cursor:pointer; margin-bottom:-2px;">ILHAS/PONTOS AMOSTRAIS</button>
+            <button id="navBtnRegistrar" type="button" onclick="navGoRegistrarDados()"
+                style="padding:10px 16px; border:none; border-bottom:2px solid transparent; background:transparent; color:#36566f; font-size:12px; font-weight:700; cursor:pointer; margin-bottom:-2px;">REGISTRAR DADOS COLETADOS</button>
+            <button id="navBtnEstacoes" type="button" onclick="startDataFlow('estacoes')"
+                style="padding:10px 16px; border:none; border-bottom:2px solid transparent; background:transparent; color:#36566f; font-size:12px; font-weight:700; cursor:pointer; margin-bottom:-2px;">CADASTRO DAS ESTAÇÕES</button>
+            <button id="navBtnVerCampanha" type="button" onclick="startDataFlow('lista')"
+                style="padding:10px 16px; border:none; border-bottom:2px solid transparent; background:transparent; color:#36566f; font-size:12px; font-weight:700; cursor:pointer; margin-bottom:-2px;">VER CAMPANHA</button>
+        </div>
+
+        <!-- Tabs (modo padrão, ocultas no fluxo Nova Campanha) -->
+        <div class="data-modal-tabs" id="dataModalDefaultTabs" style="display:none;">
             <button id="tabInicio" class="data-tab active" onclick="switchDataTab('inicio')">Início</button>
             <button id="tabIlha" class="data-tab" onclick="switchDataTab('ilha')">Selecionar Ilha</button>
             <button id="tabEstacoes" class="data-tab" onclick="switchDataTab('estacoes')">Estações</button>
             <button id="tabCampanha" class="data-tab" onclick="switchDataTab('campanha')">Nova Campanha</button>
             <button id="tabQuestionario" class="data-tab" onclick="switchDataTab('questionario')">Método</button>
-            <button id="tabLote" class="data-tab" onclick="switchDataTab('lote')">Envio em lote</button>
+            <button id="tabLote" class="data-tab" onclick="switchDataTab('lote')" style="display:none;">Envio em lote</button>
             <button id="tabGeo" class="data-tab" onclick="switchDataTab('geo')">Upload KML</button>
             <button id="tabMedia" class="data-tab" onclick="switchDataTab('media')">Upload Imagens</button>
             <button id="tabLista" class="data-tab" onclick="switchDataTab('lista')">Campanhas</button>
         </div>
 
-        <div id="dataFlowShell" style="padding:14px 16px 0;">
+        <div id="dataFlowShell" style="padding:14px 16px 0; display:none;">
             <div id="dataFlowSummary"
                 style="margin-bottom:12px; padding:12px; border:1px solid #d7e6ef; border-radius:12px; background:#f8fcff;">
                 <div
@@ -52,7 +73,7 @@
                 <button id="dataActionQuestionario" type="button" onclick="startDataFlow('questionario')"
                     style="padding:8px 12px; border:1px solid #c7d8e6; border-radius:8px; background:#fff; color:#36566f; font-size:12px; font-weight:700; cursor:pointer;">Lancamento individual</button>
                 <button id="dataActionLote" type="button" onclick="startDataFlow('lote')"
-                    style="padding:8px 12px; border:1px solid #c7d8e6; border-radius:8px; background:#fff; color:#36566f; font-size:12px; font-weight:700; cursor:pointer;">Envio em lote</button>
+                    style="display:none; padding:8px 12px; border:1px solid #c7d8e6; border-radius:8px; background:#fff; color:#36566f; font-size:12px; font-weight:700; cursor:pointer;">Envio em lote</button>
                 <button id="dataActionEstacoes" type="button" onclick="startDataFlow('estacoes')"
                     style="padding:8px 12px; border:1px solid #c7d8e6; border-radius:8px; background:#fff; color:#36566f; font-size:12px; font-weight:700; cursor:pointer;">Gerenciar estacoes</button>
                 <button id="dataActionLista" type="button" onclick="startDataFlow('lista')"
@@ -69,7 +90,7 @@
                 <button id="dataStepQuestionario" type="button" onclick="switchDataTab('questionario')"
                     style="padding:6px 10px; border:1px solid #c7d8e6; border-radius:999px; background:#fff; color:#36566f; font-size:11px; cursor:pointer;">Individual</button>
                 <button id="dataStepLote" type="button" onclick="switchDataTab('lote')"
-                    style="padding:6px 10px; border:1px solid #c7d8e6; border-radius:999px; background:#fff; color:#36566f; font-size:11px; cursor:pointer;">Lote</button>
+                    style="display:none; padding:6px 10px; border:1px solid #c7d8e6; border-radius:999px; background:#fff; color:#36566f; font-size:11px; cursor:pointer;">Lote</button>
                 <button id="dataStepEstacoes" type="button" onclick="switchDataTab('estacoes')"
                     style="padding:6px 10px; border:1px solid #c7d8e6; border-radius:999px; background:#fff; color:#36566f; font-size:11px; cursor:pointer;">Estacoes</button>
             </div>
@@ -98,7 +119,7 @@
                             <div style="font-size:11px; color:#4d6778; line-height:1.4;">Registra um método por vez em uma campanha já existente.</div>
                         </button>
                         <button type="button" onclick="startDataFlow('lote')"
-                            style="padding:16px 14px; border:1px solid #d5e5f1; border-radius:12px; background:#fff; color:#1f3b4d; text-align:left; cursor:pointer; transition:box-shadow .15s;">
+                            style="display:none; padding:16px 14px; border:1px solid #d5e5f1; border-radius:12px; background:#fff; color:#1f3b4d; text-align:left; cursor:pointer; transition:box-shadow .15s;">
                             <div style="font-size:20px; margin-bottom:6px;">📦</div>
                             <div style="font-size:13px; font-weight:700; margin-bottom:4px;">Envio em Lote</div>
                             <div style="font-size:11px; color:#4d6778; line-height:1.4;">Envia todas as estações de uma campanha em uma única submissão.</div>
@@ -156,72 +177,112 @@
                             <option value="MASC 08">MASC 08</option>
                         </select>
 
-                        <label style="display:block; margin-bottom:6px; font-size:13px;">Data *</label>
-                        <input type="date" id="campanhaData" required
-                            style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333;">
+                        <div style="display:flex; gap:10px; margin-bottom:10px;">
+                            <div style="flex:1;">
+                                <label style="display:block; margin-bottom:6px; font-size:13px;">Data Início *</label>
+                                <input type="date" id="campanhaData" required
+                                    style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333;">
+                            </div>
+                            <div style="flex:1;">
+                                <label style="display:block; margin-bottom:6px; font-size:13px;">Data Fim</label>
+                                <input type="date" id="campanhaDataFim"
+                                    style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333;">
+                            </div>
+                        </div>
 
                         <label style="display:block; margin-bottom:6px; font-size:13px;">Descrição</label>
                         <textarea id="campanhaDesc" rows="3" placeholder="Descrição opcional"
-                            style="width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333;"></textarea>
-
-                        <!-- Seleção de Ilhas e Pontos Amostrais -->
-                        <div style="margin-bottom:20px; border-top:1px solid #eee; padding-top:10px;">
-                            <label
-                                style="font-weight:bold; font-size:13px; color:#555; display:block; margin-bottom:8px;">
-                                🏝️ Ilhas e Pontos Amostrais *
-                            </label>
-                            <p style="font-size:11px; color:#888; margin:0 0 10px 0;">
-                                Selecione as ilhas e, para cada uma, as estações (pontos amostrais) desejadas.
-                            </p>
-                            <div id="ilhasSelectionContainer"
-                                style="border:1px solid #ccc; padding:8px; border-radius:6px; background:#fff;">
-                                <div style="color:#999; font-size:12px;">Carregando ilhas...</div>
-                            </div>
-                        </div>
-
-                        <!-- Base de Apoio + Quick Add -->
-                        <label style="display:block; margin-bottom:6px; font-size:13px;">Base de Apoio</label>
-                        <div style="display:flex; gap:5px; margin-bottom:10px;">
-                            <select id="campanhaBase"
-                                style="flex:1; padding:10px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333;">
-                                <option value="">-- Selecione --</option>
-                            </select>
-                            <button type="button" onclick="openQuickReg('base')" title="Nova Base"
-                                style="padding:0 12px; background:#28a745; color:white; border:none; border-radius:8px; font-size:18px; cursor:pointer;">+</button>
-                        </div>
-
-                        <!-- Embarcação + Quick Add -->
-                        <label style="display:block; margin-bottom:6px; font-size:13px;">Embarcação</label>
-                        <div style="display:flex; gap:5px; margin-bottom:15px;">
-                            <select id="campanhaEmbarcacao"
-                                style="flex:1; padding:10px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333;">
-                                <option value="">-- Selecione --</option>
-                            </select>
-                            <button type="button" onclick="openQuickReg('emb')" title="Nova Embarcação"
-                                style="padding:0 12px; background:#28a745; color:white; border:none; border-radius:8px; font-size:18px; cursor:pointer;">+</button>
-                        </div>
-
-                        <!-- Equipe de Campo -->
-                        <div style="margin-bottom:20px; border-top:1px solid #eee; padding-top:10px;">
-                            <label
-                                style="font-weight:bold; font-size:13px; color:#555; display:block; margin-bottom:5px;">Equipe
-                                de Campo</label>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                                <span style="font-size:11px; color:#666;">Selecione os participantes:</span>
-                                <button type="button" onclick="openQuickReg('equipe')" title="Novo Membro"
-                                    style="padding:0 8px; background:#28a745; color:white; border:none; border-radius:4px; height:20px; font-size:14px; cursor:pointer;">+</button>
-                            </div>
-                            <div id="equipeList"
-                                style="max-height:150px; overflow-y:auto; border:1px solid #ccc; padding:8px; border-radius:4px; background:#fff;">
-                                <div style="color:#999; font-size:12px;">Carregando equipe...</div>
-                            </div>
-                        </div>
+                            style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333;"></textarea>
 
                         <button type="submit"
                             style="width:100%; padding:10px; border:none; border-radius:8px; background:#0f8bb3; color:#fff; font-weight:bold; cursor:pointer;">Criar
                             Campanha</button>
                     </form>
                     <div id="campanhaResult" style="margin-top:15px; padding:10px; border-radius:6px; display:none;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Ilhas e Pontos Amostrais -->
+            <div id="contentIlhasamostrais" class="tab-content" style="display:none;">
+                <div class="mock-section">
+                    <h4 style="margin:0 0 4px 0;">Ilhas e Pontos Amostrais</h4>
+
+                    <!-- Seletor de Campanha para lançamento inline -->
+                    <div style="margin-bottom:12px; padding:10px; background:#f0f8ff; border:1px solid #b8d4e8; border-radius:8px;">
+                        <label style="display:block; font-size:12px; font-weight:700; color:#0f4f67; margin-bottom:6px;">Campanha para lançamento de dados</label>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <select id="ilhasSelCampanhaSelect"
+                                style="flex:1; padding:8px 10px; border-radius:6px; border:1px solid #b8d4e8; background:#fff; color:#1f3b4d; font-size:12px;"
+                                onchange="onIlhasSelCampanhaChange()">
+                                <option value="">-- Selecione a campanha --</option>
+                            </select>
+                            <button type="button" onclick="loadIlhasSelCampanhas()" title="Atualizar"
+                                style="padding:7px 10px; border:1px solid #b8d4e8; border-radius:6px; background:#fff; color:#36566f; cursor:pointer; font-size:12px;">↺</button>
+                        </div>
+                        <div id="ilhasSelCampanhaHint" style="font-size:11px; color:#7a93a3; margin-top:4px;">
+                            Selecione a campanha para habilitar o lançamento de dados em cada ponto.
+                        </div>
+                        <div style="margin-top:8px; display:flex; justify-content:flex-end;">
+                            <button id="ilhasSelOpenLoteBtn" type="button" onclick="openBatchFromIlhasSelection()" title="Cadastro em lote temporariamente desabilitado"
+                                style="padding:7px 12px; border:1px solid #0f8bb3; border-radius:6px; background:#edf8fd; color:#0f8bb3; cursor:pointer; font-size:12px; font-weight:700;"
+                                disabled>
+                                Cadastro em lote
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Base de Apoio / Embarcação / Equipe -->
+                    <div style="margin-bottom:12px; padding:10px; background:#f8fcff; border:1px solid #d5e5f1; border-radius:8px;">
+                        <div style="display:flex; gap:10px; margin-bottom:8px;">
+                            <div style="flex:1;">
+                                <label style="display:block; margin-bottom:4px; font-size:12px; color:#36566f;">Base de Apoio</label>
+                                <div style="display:flex; gap:6px; align-items:center;">
+                                    <select id="campanhaBase"
+                                        style="flex:1; padding:8px 10px; border-radius:6px; border:1px solid #ccc; background:#fff; color:#333; font-size:12px;">
+                                        <option value="">-- Selecione --</option>
+                                    </select>
+                                    <button type="button" onclick="openQuickReg('base')"
+                                        style="padding:7px 10px; border:1px solid #0f8bb3; border-radius:6px; background:#edf8fd; color:#0f8bb3; cursor:pointer; font-size:12px; white-space:nowrap;">+ Base</button>
+                                </div>
+                            </div>
+                            <div style="flex:1;">
+                                <label style="display:block; margin-bottom:4px; font-size:12px; color:#36566f;">Embarcação</label>
+                                <div style="display:flex; gap:6px; align-items:center;">
+                                    <select id="campanhaEmbarcacao"
+                                        style="flex:1; padding:8px 10px; border-radius:6px; border:1px solid #ccc; background:#fff; color:#333; font-size:12px;">
+                                        <option value="">-- Selecione --</option>
+                                    </select>
+                                    <button type="button" onclick="openQuickReg('emb')"
+                                        style="padding:7px 10px; border:1px solid #0f8bb3; border-radius:6px; background:#edf8fd; color:#0f8bb3; cursor:pointer; font-size:12px; white-space:nowrap;">+ Emb.</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <label style="font-size:12px; color:#36566f;">Equipe de Campo</label>
+                                <button type="button" onclick="openQuickReg('equipe')"
+                                    style="padding:4px 10px; border:1px solid #0f8bb3; border-radius:6px; background:#edf8fd; color:#0f8bb3; cursor:pointer; font-size:12px;">+ Membro</button>
+                            </div>
+                            <div id="equipeList"
+                                style="max-height:110px; overflow-y:auto; border:1px solid #ccc; border-radius:6px; padding:8px; background:#fff; font-size:12px;">
+                                <div style="color:#999;">Carregando equipe...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="ilhasSelectionContainer"
+                        style="border:1px solid #ccc; padding:8px; border-radius:6px; background:#fff; min-height:80px;">
+                        <div style="color:#999; font-size:12px;">Carregando ilhas...</div>
+                    </div>
+
+                    <div id="ilhasPontosResult" style="margin-top:10px; padding:8px 12px; border-radius:6px; display:none;"></div>
+
+                    <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+                        <button type="button" onclick="salvarIlhasPontos()"
+                            style="padding:9px 22px; border:none; border-radius:8px; background:#0f8bb3; color:#fff; font-size:13px; font-weight:700; cursor:pointer;">
+                            Salvar Pontos Amostrais
+                        </button>
                     </div>
                 </div>
             </div>
@@ -322,285 +383,337 @@
             <!-- Tab 5: Listar Campanhas -->
             <div id="contentLista" class="tab-content" style="display:none;">
                 <div class="mock-section">
-                    <h4>Campanhas da Ilha</h4>
-                    <div id="campanhasList" style="color:#c5d8e3; font-size:13px;">
-                        Selecione uma ilha para ver suas campanhas
+
+                    <!-- Painel de detalhes (oculto até clicar em uma campanha) -->
+                    <div id="campanhaDetailPanel" style="display:none; margin-bottom:16px; border:1px solid #b8d9ec; border-radius:10px; background:#f4faff; overflow:hidden;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#e2f2fb; border-bottom:1px solid #b8d9ec;">
+                            <span id="cdpNome" style="font-size:14px; font-weight:700; color:#0f4f67;"></span>
+                            <button onclick="document.getElementById('campanhaDetailPanel').style.display='none'"
+                                style="background:none; border:none; font-size:18px; color:#5a7d8f; cursor:pointer; line-height:1;">&times;</button>
+                        </div>
+                        <div style="padding:14px; display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:13px; color:#2d4a5a;">
+                            <div><span style="font-weight:600; color:#557083;">Ilha(s):</span><br><span id="cdpIlhas"></span></div>
+                            <div><span style="font-weight:600; color:#557083;">Status:</span><br><span id="cdpStatus"></span></div>
+                            <div><span style="font-weight:600; color:#557083;">Data Início:</span><br><span id="cdpDataInicio"></span></div>
+                            <div><span style="font-weight:600; color:#557083;">Data Fim:</span><br><span id="cdpDataFim"></span></div>
+                            <div><span style="font-weight:600; color:#557083;">Base de Apoio:</span><br><span id="cdpBase"></span></div>
+                            <div><span style="font-weight:600; color:#557083;">Embarcação:</span><br><span id="cdpEmbarcacao"></span></div>
+                            <div style="grid-column:span 2;"><span style="font-weight:600; color:#557083;">Descrição:</span><br><span id="cdpDescricao" style="color:#456070;"></span></div>
+                            <div style="grid-column:span 2;">
+                                <span style="font-weight:600; color:#557083;">Equipe de Campo:</span><br>
+                                <span id="cdpEquipe" style="color:#456070;"></span>
+                            </div>
+                            <div style="grid-column:span 2;">
+                                <span style="font-weight:600; color:#557083;">Estações Amostrais:</span><br>
+                                <div id="cdpEstacoes" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de campanhas -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h4 style="margin:0;">Campanhas</h4>
+                        <button onclick="loadCampanhasList()" style="padding:5px 10px; border:1px solid #b8d9ec; border-radius:6px; background:#f4faff; color:#0f8bb3; font-size:12px; cursor:pointer;">↺ Atualizar</button>
+                    </div>
+                    <div id="campanhasList" style="color:#9ab8c8; font-size:13px; display:flex; flex-direction:column; gap:8px;">
+                        Carregando campanhas...
                     </div>
                 </div>
             </div>
             <!-- Users Tab Content Removed (Moved to separate modal) -->
             <!-- Note: Tabs 8, 9, 10 for Base/Embarcacao/Equipe removed from modal body -->
 
-            <!-- Tab 11: Questionário -->
+            <!-- Tab: Registrar Dados Coletados -->
             <div id="contentQuestionario" class="tab-content" style="display:none;">
                 <div class="mock-section">
-                    <h4>Método utilizado</h4>
+                    <h4 style="margin:0 0 12px 0;">Registrar Dados Coletados</h4>
 
-                    <!-- Step 1: Select Campaign -->
-                    <div id="qStep1">
-                        <div id="qSelectedIlhaInfo"
-                            style="margin-bottom:8px; padding:8px 10px; border-radius:8px; border:1px solid #d5e5f1; background:#edf7ff; color:#214b66; font-size:12px; font-weight:700;">
-                            Ilha selecionada: -
-                        </div>
-                        <label style="display:block; margin-bottom:6px; font-size:13px;">Selecione a Campanha</label>
-                        <select id="qCampanhaSelect" onchange="onQuestionarioCampanhaSelected()"
-                            style="width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333;">
-                            <option value="">-- Selecione --</option>
+                    <!-- Seletor de Ilha -->
+                    <div style="margin-bottom:10px;">
+                        <label style="display:block; margin-bottom:5px; font-size:12px; font-weight:700; color:#36566f;">Selecione a Ilha</label>
+                        <select id="qIlhaSelect" onchange="onQIlhaSelected()"
+                            style="width:100%; padding:9px 10px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333; font-size:13px;">
+                            <option value="">-- Selecione a Ilha --</option>
                         </select>
                     </div>
 
-                    <!-- Step 2: Select Station (Dynamic List) -->
-                    <div id="qStep2" style="display:none;">
-                        <h5 style="color:#2ec1f1; margin-bottom:10px;">Selecione uma estação para registrar dados:</h5>
+                    <!-- Seletor de Campanha -->
+                    <div id="qStep1" style="margin-bottom:10px; display:none;">
+                        <label style="display:block; margin-bottom:5px; font-size:12px; font-weight:700; color:#36566f;">Selecione a Campanha</label>
+                        <select id="qCampanhaSelect" onchange="onQuestionarioCampanhaSelected()"
+                            style="width:100%; padding:9px 10px; border-radius:8px; border:1px solid #ccc; background:#fff; color:#333; font-size:13px;">
+                            <option value="">-- Selecione a Campanha --</option>
+                        </select>
+                    </div>
+
+                    <!-- Seletor de Ponto -->
+                    <div id="qStep2" style="display:none; margin-bottom:10px;">
+                        <label style="display:block; margin-bottom:5px; font-size:12px; font-weight:700; color:#36566f;">Selecione o Ponto</label>
                         <div id="qStationsGrid"
-                            style="display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:10px;">
-                            <!-- Stations will be loaded here -->
+                            style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap:8px; margin-bottom:8px;">
                         </div>
                         <div id="qSelectedStationInfo"
-                            style="display:none; margin-top:12px; padding:8px 10px; border-radius:8px; border:1px solid #d5e5f1; background:#f7fbff; color:#214b66; font-size:12px; font-weight:700;">
-                        </div>
-                        <div id="qMethodActions" style="display:none; margin-top:12px;">
-                            <div style="font-size:12px; font-weight:700; color:#36566f; margin-bottom:8px;">Metodos disponiveis para a estacao selecionada</div>
-                            <div id="qMethodGrid"
-                                style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:10px;">
-                            </div>
+                            style="display:none; margin-top:8px; padding:7px 10px; border-radius:8px; border:1px solid #d5e5f1; background:#f7fbff; color:#214b66; font-size:12px; font-weight:700;">
                         </div>
                     </div>
 
-                    <!-- Hidden Forms Container (For Modal Injection) -->
+                    <!-- Seletor de Método -->
+                    <div id="qMethodActions" style="display:none; margin-bottom:12px;">
+                        <label style="display:block; margin-bottom:5px; font-size:12px; font-weight:700; color:#36566f;">Selecione o Método</label>
+                        <div id="qMethodGrid"
+                            style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:8px;">
+                        </div>
+                    </div>
+
+                    <!-- Forms Container -->
                     <div id="hiddenFormsContainer" style="display:none;">
 
                         <!-- Busca Ativa Form -->
-                        <div id="formBusca"
-                            style="display:none; background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:15px;">
-                            <h6 style="margin-top:0;">📊 Nova Busca Ativa</h6>
+                        <div id="formBusca" style="display:none; background:#f8f9fa; padding:14px; border-radius:8px; margin-bottom:12px; border:1px solid #d5e5f1;">
+                            <h6 style="margin:0 0 12px 0; color:#0f4f67;">📊 Busca Ativa</h6>
                             <form onsubmit="createBuscaAtiva(event)">
-                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-                                    <div><label style="font-size:12px;">Número da Busca</label><input type="number"
-                                            id="buscaNumero"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+                                    <div><label style="font-size:12px;">Data</label>
+                                        <input type="date" id="buscaData" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Data</label><input type="date" id="buscaData"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div></div>
+                                    <div><label style="font-size:12px;">Hora Início</label>
+                                        <input type="time" id="buscaHora" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Hora Início</label><input type="time"
-                                            id="buscaHora"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Hora Fim</label>
+                                        <input type="time" id="buscaHoraFim" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Duração (HH:MM:SS)</label><input type="text"
-                                            id="buscaDuracao" placeholder="00:30:00"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Prof. Inicial (m)</label>
+                                        <input type="number" step="0.01" id="buscaProfIni" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Prof. Inicial (m)</label><input type="number"
-                                            step="0.01" id="buscaProfIni"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Prof. Final (m)</label>
+                                        <input type="number" step="0.01" id="buscaProfFin" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Prof. Final (m)</label><input type="number"
-                                            step="0.01" id="buscaProfFin"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Temp. Inicial (°C)</label>
+                                        <input type="number" step="0.01" id="buscaTempIni" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Temp. Inicial (°C)</label><input type="number"
-                                            step="0.01" id="buscaTempIni"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Temp. Final (°C)</label>
+                                        <input type="number" step="0.01" id="buscaTempFin" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Temp. Final (°C)</label><input type="number"
-                                            step="0.01" id="buscaTempFin"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Visib. Vert. (m)</label>
+                                        <input type="number" step="0.01" id="buscaVisV" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Visib. Vert. (m)</label><input type="number"
-                                            step="0.01" id="buscaVisV"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                                    </div>
-                                    <div><label style="font-size:12px;">Visib. Horiz. (m)</label><input type="number"
-                                            step="0.01" id="buscaVisH"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                                    </div>
-                                </div>
-
-                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-                                    <div><label style="font-size:12px;">Latitude <span style="font-size:10px; color:#7a93a3;">(graus decimais · SIRGAS 2000)</span></label><input type="number"
-                                            step="0.000001" id="buscaLat" placeholder="Ex: -23.550520"
-                                            min="-34" max="5"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                                    </div>
-                                    <div><label style="font-size:12px;">Longitude <span style="font-size:10px; color:#7a93a3;">(graus decimais · SIRGAS 2000)</span></label><input type="number"
-                                            step="0.000001" id="buscaLon" placeholder="Ex: -46.633309"
-                                            min="-74" max="-28"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Visib. Horiz. (m)</label>
+                                        <input type="number" step="0.01" id="buscaVisH" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
                                 </div>
                                 <div style="margin-bottom:10px;">
+                                    <label style="font-size:12px;">Percurso (Arquivo KML/KMZ — Coordenadas de Início e Fim)</label>
+                                    <input type="file" id="buscaPercursoFile" accept=".kml,.kmz,.geojson,.json,.shp,.zip"
+                                        style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
+                                    <label style="font-size:12px;">Transecto (Arquivo KML/KMZ — Geometria do Transecto)</label>
+                                    <input type="file" id="buscaTransectoKmlFile" accept=".kml,.kmz"
+                                        style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
                                     <label style="font-size:12px;">Planilha Excel (Upload)</label>
                                     <input type="file" id="buscaExcelFile" accept=".xls,.xlsx"
-                                        style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
-                                    <label style="font-size:12px;">Arquivo Percurso (KML/KMZ/GeoJSON/Shapefile) (Upload)</label>
-                                    <input type="file" id="buscaPercursoFile" accept=".kml,.kmz,.geojson,.json,.shp,.zip"
-                                        style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
-                                    <label style="font-size:12px;">Dados Meteorológicos (Upload Imagem)</label>
+                                        style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
+                                    <label style="font-size:12px;">Condição do Sítio (Upload Imagem)</label>
                                     <input type="file" id="buscaMeteoFile" accept="image/*"
-                                        style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
+                                        style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
                                     <label style="font-size:12px;">Imagens da Busca Ativa</label>
                                     <input type="file" id="buscaImagensFile" accept="image/*" multiple
-                                        style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                        style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                 </div>
-
                                 <div style="margin-bottom:10px;">
                                     <label style="font-size:12px;"><input type="checkbox" id="buscaCoralsol"
                                             onchange="toggleCoralSolModal()"> Encontrou Coral-sol?</label>
                                 </div>
-                                <div style="display:flex; gap:10px;">
-                                    <button type="submit"
-                                        style="padding:8px 15px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer;">Salvar</button>
-                                    <button type="button" onclick="hideMethodForm('busca')"
-                                        style="padding:8px 15px; background:#6c757d; color:#fff; border:none; border-radius:4px; cursor:pointer;">Cancelar</button>
+                                <div style="display:flex; gap:8px;">
+                                    <button type="submit" style="padding:8px 14px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:600;">Salvar</button>
+                                    <button type="button" onclick="hideMethodForm('busca')" style="padding:8px 14px; background:#6c757d; color:#fff; border:none; border-radius:4px; cursor:pointer;">Cancelar</button>
                                 </div>
                             </form>
                         </div>
 
                         <!-- Video Transecto Form -->
-                        <div id="formVideo"
-                            style="display:none; background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:15px;">
-                            <h6 style="margin-top:0;">🎥 Novo Vídeo Transecto</h6>
+                        <div id="formVideo" style="display:none; background:#f8f9fa; padding:14px; border-radius:8px; margin-bottom:12px; border:1px solid #d5e5f1;">
+                            <h6 style="margin:0 0 12px 0; color:#0f4f67;">🎥 Vídeo Transecto</h6>
                             <form onsubmit="createVideoTransecto(event)">
-                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-                                    <div><label style="font-size:12px;">Data</label><input type="date" id="videoData"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+                                    <div><label style="font-size:12px;">Data</label>
+                                        <input type="date" id="videoData" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Hora</label><input type="time" id="videoHora"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div></div>
+                                    <div><label style="font-size:12px;">Hora Início</label>
+                                        <input type="time" id="videoHora" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Prof. Inicial (m)</label><input type="number"
-                                            step="0.01" id="videoProfIni"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Hora Fim</label>
+                                        <input type="time" id="videoHoraFim" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Prof. Final (m)</label><input type="number"
-                                            step="0.01" id="videoProfFin"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Prof. Inicial (m)</label>
+                                        <input type="number" step="0.01" id="videoProfIni" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Temp. Inicial (°C)</label><input type="number"
-                                            step="0.01" id="videoTempIni"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Prof. Final (m)</label>
+                                        <input type="number" step="0.01" id="videoProfFin" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Temp. Final (°C)</label><input type="number"
-                                            step="0.01" id="videoTempFin"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Temp. Inicial (°C)</label>
+                                        <input type="number" step="0.01" id="videoTempIni" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Visib. Vert. (m)</label><input type="number"
-                                            step="0.01" id="videoVisV"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Temp. Final (°C)</label>
+                                        <input type="number" step="0.01" id="videoTempFin" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Visib. Horiz. (m)</label><input type="number"
-                                            step="0.01" id="videoVisH"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Visib. Vert. (m)</label>
+                                        <input type="number" step="0.01" id="videoVisV" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-
-                                    <!-- Biodiversity Stats -->
-                                    <div><label style="font-size:12px;">Riqueza Esp.</label><input type="number"
-                                            step="0.0001" id="videoRiqueza"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Visib. Horiz. (m)</label>
+                                        <input type="number" step="0.01" id="videoVisH" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Shannon</label><input type="number"
-                                            step="0.0001" id="videoShannon"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Riqueza Esp.</label>
+                                        <input type="number" step="0.0001" id="videoRiqueza" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Jaccard</label><input type="number"
-                                            step="0.0001" id="videoJaccard"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Shannon</label>
+                                        <input type="number" step="0.0001" id="videoShannon" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
+                                    </div>
+                                    <div><label style="font-size:12px;">Jaccard</label>
+                                        <input type="number" step="0.0001" id="videoJaccard" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
                                 </div>
-
                                 <div style="margin-bottom:10px;">
+                                    <label style="font-size:12px;">Percurso (Arquivo KML/KMZ — Coordenadas de Início e Fim)</label>
+                                    <input type="file" id="videoPercursoFile" accept=".kml,.kmz,.geojson,.json,.shp,.zip"
+                                        style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
+                                    <label style="font-size:12px;">Transecto (Arquivo KML/KMZ — Geometria do Transecto)</label>
+                                    <input type="file" id="videoTransectoKmlFile" accept=".kml,.kmz"
+                                        style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
                                     <label style="font-size:12px;">Arquivo de Vídeo (Upload)</label>
                                     <input type="file" id="videoFile" accept="video/*"
-                                        style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
-                                    <label style="font-size:12px;">Dados Meteorológicos (Upload Imagem)</label>
+                                        style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
+                                    <label style="font-size:12px;">Condição do Sítio (Upload Imagem)</label>
                                     <input type="file" id="videoMeteoFile" accept="image/*"
-                                        style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                        style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                 </div>
-
-                                <div style="display:flex; gap:10px;">
-                                    <button type="submit"
-                                        style="padding:8px 15px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer;">Salvar</button>
-                                    <button type="button" onclick="hideMethodForm('video')"
-                                        style="padding:8px 15px; background:#6c757d; color:#fff; border:none; border-radius:4px; cursor:pointer;">Cancelar</button>
+                                <div style="display:flex; gap:8px;">
+                                    <button type="submit" style="padding:8px 14px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:600;">Salvar</button>
+                                    <button type="button" onclick="hideMethodForm('video')" style="padding:8px 14px; background:#6c757d; color:#fff; border:none; border-radius:4px; cursor:pointer;">Cancelar</button>
                                 </div>
                             </form>
                         </div>
 
                         <!-- Foto Quadrado Form -->
-                        <div id="formFoto"
-                            style="display:none; background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:15px;">
-                            <h6 style="margin-top:0;">📷 Novo Foto Quadrado</h6>
+                        <div id="formFoto" style="display:none; background:#f8f9fa; padding:14px; border-radius:8px; margin-bottom:12px; border:1px solid #d5e5f1;">
+                            <h6 style="margin:0 0 12px 0; color:#0f4f67;">📷 Foto Quadrado</h6>
                             <form onsubmit="createFotoquadrado(event)">
-                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-                                    <div><label style="font-size:12px;">Data</label><input type="date" id="fotoData"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                                    </div>
-                                    <div><label style="font-size:12px;">Hora</label><input type="time" id="fotoHora"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                                    </div>
-                                    <div><label style="font-size:12px;">Profundidade (m)</label><input type="number"
-                                            step="0.01" id="fotoProf"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                                    </div>
-                                    <div><label style="font-size:12px;">Temperatura (°C)</label><input type="number"
-                                            step="0.01" id="fotoTemp"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                                    </div>
-                                    <div><label style="font-size:12px;">Visib. Vert. (m)</label><input type="number"
-                                            step="0.01" id="fotoVisV"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                                    </div>
-                                    <div><label style="font-size:12px;">Visib. Horiz. (m)</label><input type="number"
-                                            step="0.01" id="fotoVisH"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                                    </div>
 
-                                    <!-- Biodiversity Stats -->
-                                    <div><label style="font-size:12px;">Riqueza Esp.</label><input type="number"
-                                            step="0.0001" id="fotoRiqueza"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                <!-- Campos gerais do ponto -->
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+                                    <div><label style="font-size:12px;">Data</label>
+                                        <input type="date" id="fotoData" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Shannon</label><input type="number"
-                                            step="0.0001" id="fotoShannon"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div></div>
+                                    <div><label style="font-size:12px;">Hora Início</label>
+                                        <input type="time" id="fotoHora" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
-                                    <div><label style="font-size:12px;">Jaccard</label><input type="number"
-                                            step="0.0001" id="fotoJaccard"
-                                            style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <div><label style="font-size:12px;">Hora Fim</label>
+                                        <input type="time" id="fotoHoraFim" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
+                                    </div>
+                                    <div><label style="font-size:12px;">Profundidade (m)</label>
+                                        <input type="number" step="0.01" id="fotoProf" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
+                                    </div>
+                                    <div><label style="font-size:12px;">Temperatura (°C)</label>
+                                        <input type="number" step="0.01" id="fotoTemp" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
+                                    </div>
+                                    <div><label style="font-size:12px;">Visib. Vert. (m)</label>
+                                        <input type="number" step="0.01" id="fotoVisV" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
+                                    </div>
+                                    <div><label style="font-size:12px;">Visib. Horiz. (m)</label>
+                                        <input type="number" step="0.01" id="fotoVisH" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
+                                    </div>
+                                    <div><label style="font-size:12px;">Riqueza Esp.</label>
+                                        <input type="number" step="0.0001" id="fotoRiqueza" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
+                                    </div>
+                                    <div><label style="font-size:12px;">Shannon</label>
+                                        <input type="number" step="0.0001" id="fotoShannon" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
+                                    </div>
+                                    <div><label style="font-size:12px;">Jaccard</label>
+                                        <input type="number" step="0.0001" id="fotoJaccard" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                     </div>
                                 </div>
-
-                                <div style="margin-bottom:10px;">
-                                    <label style="font-size:12px;">Imagem Mosaico (Upload)</label>
-                                    <input type="file" id="fotoMosaicoFile" accept="image/*"
-                                        style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
-                                    <label style="font-size:12px;">Imagens Complementares (Upload)</label>
-                                    <input type="file" id="fotoComplementaresFiles" accept="image/*" multiple
-                                        style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
-                                    <label style="font-size:12px;">Imagens Complementares (JSON Array de URLs)</label>
-                                    <input type="text" id="fotoComplementares"
-                                        placeholder='["http://...", "http://..."]'
-                                        style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
-                                    <label style="font-size:12px;">Dados Meteorológicos (Upload Imagem)</label>
+                                <div style="margin-bottom:14px;">
+                                    <label style="font-size:12px;">Coordenadas de Início e Fim (Upload .kml)</label>
+                                    <input type="file" id="fotoPercursoFile" accept=".kml,.kmz,.geojson,.json,.shp,.zip"
+                                        style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;">
+                                    <label style="font-size:12px;">Condição do Sítio (Upload Imagem)</label>
                                     <input type="file" id="fotoMeteoFile" accept="image/*"
-                                        style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                        style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
                                 </div>
 
-                                <div style="display:flex; gap:10px;">
-                                    <button type="submit"
-                                        style="padding:8px 15px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer;">Salvar</button>
-                                    <button type="button" onclick="hideMethodForm('foto')"
-                                        style="padding:8px 15px; background:#6c757d; color:#fff; border:none; border-radius:4px; cursor:pointer;">Cancelar</button>
+                                <!-- 5 Amostras: 1 mosaico + 15 imagens cada -->
+                                <div style="margin-bottom:14px;">
+                                    <div style="font-size:12px; font-weight:700; color:#0f4f67; margin-bottom:10px; padding-bottom:4px; border-bottom:1px solid #d5e5f1;">
+                                        Amostras (5 por ponto)
+                                    </div>
+
+                                    <!-- FQ1 -->
+                                    <div style="margin-bottom:12px; padding:10px; border:1px solid #c8dcea; border-radius:6px; background:#fff;">
+                                        <div style="font-size:12px; font-weight:700; color:#1a5c7a; margin-bottom:8px;">FQ1</div>
+                                        <label style="font-size:12px; display:block; margin-bottom:4px;">FQ1 Mosaico (1 imagem)</label>
+                                        <input type="file" id="fotoMosaicoFile1" accept="image/*"
+                                            style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; margin-bottom:8px;">
+                                        <label style="font-size:12px; display:block; margin-bottom:4px;">FQ1 Fotos (máx. 15 imagens)</label>
+                                        <input type="file" id="fotoComplementaresFiles1" accept="image/*" multiple
+                                            style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
+                                    </div>
+
+                                    <!-- FQ2 -->
+                                    <div style="margin-bottom:12px; padding:10px; border:1px solid #c8dcea; border-radius:6px; background:#fff;">
+                                        <div style="font-size:12px; font-weight:700; color:#1a5c7a; margin-bottom:8px;">FQ2</div>
+                                        <label style="font-size:12px; display:block; margin-bottom:4px;">FQ2 Mosaico (1 imagem)</label>
+                                        <input type="file" id="fotoMosaicoFile2" accept="image/*"
+                                            style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; margin-bottom:8px;">
+                                        <label style="font-size:12px; display:block; margin-bottom:4px;">FQ2 Fotos (máx. 15 imagens)</label>
+                                        <input type="file" id="fotoComplementaresFiles2" accept="image/*" multiple
+                                            style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
+                                    </div>
+
+                                    <!-- FQ3 -->
+                                    <div style="margin-bottom:12px; padding:10px; border:1px solid #c8dcea; border-radius:6px; background:#fff;">
+                                        <div style="font-size:12px; font-weight:700; color:#1a5c7a; margin-bottom:8px;">FQ3</div>
+                                        <label style="font-size:12px; display:block; margin-bottom:4px;">FQ3 Mosaico (1 imagem)</label>
+                                        <input type="file" id="fotoMosaicoFile3" accept="image/*"
+                                            style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; margin-bottom:8px;">
+                                        <label style="font-size:12px; display:block; margin-bottom:4px;">FQ3 Fotos (máx. 15 imagens)</label>
+                                        <input type="file" id="fotoComplementaresFiles3" accept="image/*" multiple
+                                            style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
+                                    </div>
+
+                                    <!-- FQ4 -->
+                                    <div style="margin-bottom:12px; padding:10px; border:1px solid #c8dcea; border-radius:6px; background:#fff;">
+                                        <div style="font-size:12px; font-weight:700; color:#1a5c7a; margin-bottom:8px;">FQ4</div>
+                                        <label style="font-size:12px; display:block; margin-bottom:4px;">FQ4 Mosaico (1 imagem)</label>
+                                        <input type="file" id="fotoMosaicoFile4" accept="image/*"
+                                            style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; margin-bottom:8px;">
+                                        <label style="font-size:12px; display:block; margin-bottom:4px;">FQ4 Fotos (máx. 15 imagens)</label>
+                                        <input type="file" id="fotoComplementaresFiles4" accept="image/*" multiple
+                                            style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
+                                    </div>
+
+                                    <!-- FQ5 -->
+                                    <div style="margin-bottom:4px; padding:10px; border:1px solid #c8dcea; border-radius:6px; background:#fff;">
+                                        <div style="font-size:12px; font-weight:700; color:#1a5c7a; margin-bottom:8px;">FQ5</div>
+                                        <label style="font-size:12px; display:block; margin-bottom:4px;">FQ5 Mosaico (1 imagem)</label>
+                                        <input type="file" id="fotoMosaicoFile5" accept="image/*"
+                                            style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; margin-bottom:8px;">
+                                        <label style="font-size:12px; display:block; margin-bottom:4px;">FQ5 Fotos (máx. 15 imagens)</label>
+                                        <input type="file" id="fotoComplementaresFiles5" accept="image/*" multiple
+                                            style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px;">
+                                    </div>
+                                </div>
+
+                                <div style="display:flex; gap:8px;">
+                                    <button type="submit" style="padding:8px 14px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:600;">Salvar</button>
+                                    <button type="button" onclick="hideMethodForm('foto')" style="padding:8px 14px; background:#6c757d; color:#fff; border:none; border-radius:4px; cursor:pointer;">Cancelar</button>
                                 </div>
                             </form>
                         </div>
 
                         <!-- Methods Summary -->
-                        <div id="methodsSummary" style="margin-top:25px;">
-                            <div id="methodsList" style="font-size:13px; color:#555;">
-                                <!-- Populated by JS -->
-                            </div>
+                        <div id="methodsSummary" style="margin-top:16px;">
+                            <div id="methodsList" style="font-size:13px; color:#555;"></div>
                         </div>
                     </div>
 
@@ -610,14 +723,14 @@
             <!-- Tab 12: Envio em Lote -->
             <div id="contentLote" class="tab-content" style="display:none;">
                 <div class="mock-section">
-                    <h4>Envio em lote por estação</h4>
+                    <h4>Envio em lote por ilha e ponto amostral</h4>
                     <div id="batchSelectedIlhaInfo"
                         style="margin-bottom:8px; padding:8px 10px; border-radius:8px; border:1px solid #d5e5f1; background:#edf7ff; color:#214b66; font-size:12px; font-weight:700;">
                         Ilha selecionada: -
                     </div>
                     <div
                         style="margin-bottom:12px; padding:10px; border:1px solid #e5edf3; border-radius:8px; background:#fbfdff; color:#4d6778; font-size:12px; line-height:1.5;">
-                        Monte o lote por campanha. Os arquivos de mídia são enviados primeiro e, em seguida, os registros de Busca Ativa, Vídeo Transecto e Foto Quadrado são persistidos em uma única chamada.
+                        Monte o lote por campanha, ilha e ponto amostral. Os arquivos de mídia são enviados primeiro e, em seguida, os registros de Busca Ativa, Vídeo Transecto e Foto Quadrado são persistidos em uma única chamada.
                     </div>
 
                     <label style="display:block; margin-bottom:6px; font-size:13px;">Selecione a Campanha</label>
@@ -654,48 +767,86 @@
 
         <!-- Tab 13: Gestão de Estações -->
         <div id="contentEstacoes" class="tab-content" style="display:none;">
-            <div class="mock-section" style="background:#f8f9fa; border-left:4px solid #0f8bb3; margin-bottom:15px;">
-                <h4 style="margin-top:0; color:#0f8bb3;">Gerenciar Estações da Ilha</h4>
-                <div id="estacaoIlhaInfo" style="margin-bottom:10px; font-weight:bold; color:#555;"></div>
+            <div class="mock-section" style="padding:0;">
+                <h4 style="margin:0 0 10px 0; color:#0f8bb3; padding:10px 10px 0 10px;">Gerenciar Estações da Ilha</h4>
+                <div id="estacaoIlhaInfo" style="margin:0 10px 8px 10px; font-weight:bold; color:#555;"></div>
 
-                <!-- Add New Station Form -->
-                <div
-                    style="background:#fff; padding:10px; border-radius:6px; border:1px solid #ddd; margin-bottom:15px;">
-                    <h5 style="margin-top:0; margin-bottom:8px;">Nova Estação</h5>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
-                        <input type="text" id="newStationCode" placeholder="Código (ex: IC01)"
-                            style="padding:6px; border:1px solid #ccc; border-radius:4px;">
-                        <input type="text" id="newStationName" placeholder="Nome (Opcional)"
-                            style="padding:6px; border:1px solid #ccc; border-radius:4px;">
-                        <select id="newStationMethod" style="padding:6px; border:1px solid #ccc; border-radius:4px;">
-                            <option value="BA">Busca Ativa (BA)</option>
-                            <option value="FQ e VT">Fotoquadrado + Vídeo (FQ+VT)</option>
-                        </select>
-                    </div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
-                        <input type="number" step="0.000001" id="newStationLat"
-                            placeholder="Latitude decimal · Ex: -23.550520"
-                            title="Graus decimais — SIRGAS 2000 (EPSG:4674)" min="-34" max="5"
-                            style="padding:6px; border:1px solid #ccc; border-radius:4px;">
-                        <input type="number" step="0.000001" id="newStationLon"
-                            placeholder="Longitude decimal · Ex: -46.633309"
-                            title="Graus decimais — SIRGAS 2000 (EPSG:4674)" min="-74" max="-28"
-                            style="padding:6px; border:1px solid #ccc; border-radius:4px;">
-                    </div>
-                    <textarea id="newStationDesc" placeholder="Descrição / Referência de localização" rows="1"
-                        style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px; margin-bottom:8px;"></textarea>
-                    <button onclick="createStation()"
-                        style="width:100%; padding:8px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer;">+
-                        Adicionar Estação</button>
+                <!-- Sub-abas: Individual / Em Lote -->
+                <div style="display:flex; gap:0; border-bottom:2px solid #d5e5f1; margin-bottom:12px; padding:0 10px;">
+                    <button id="estSubTabIndividual" type="button" onclick="switchEstSubTab('individual')"
+                        style="padding:8px 16px; border:none; border-bottom:2px solid #0f8bb3; background:transparent; color:#0f8bb3; font-size:12px; font-weight:700; cursor:pointer; margin-bottom:-2px;">Cadastro Individual</button>
+                    <button id="estSubTabLote" type="button" onclick="switchEstSubTab('lote')"
+                        style="padding:8px 16px; border:none; border-bottom:2px solid transparent; background:transparent; color:#36566f; font-size:12px; font-weight:700; cursor:pointer; margin-bottom:-2px;">Cadastro em Lote</button>
                 </div>
 
-                <!-- List of Stations -->
-                <h5 style="margin-bottom:8px;">Estações Cadastradas</h5>
-                <div id="stationsListAdmin"
-                    style="max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
-                    <!-- JS populated -->
-                    <div style="color:#999; padding:10px; text-align:center;">Selecione uma ilha na aba 1 para gerenciar
-                        suas estações.</div>
+                <!-- Sub-aba: Cadastro Individual -->
+                <div id="estSubContentIndividual" style="padding:0 10px 10px 10px;">
+                    <div style="background:#fff; padding:10px; border-radius:6px; border:1px solid #ddd; margin-bottom:15px;">
+                        <h5 style="margin-top:0; margin-bottom:8px;">Nova Estação</h5>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
+                            <input type="text" id="newStationCode" placeholder="Código (ex: IC01)"
+                                style="padding:6px; border:1px solid #ccc; border-radius:4px;">
+                            <input type="text" id="newStationName" placeholder="Nome (Opcional)"
+                                style="padding:6px; border:1px solid #ccc; border-radius:4px;">
+                            <select id="newStationMethod" style="padding:6px; border:1px solid #ccc; border-radius:4px;">
+                                <option value="BA">Busca Ativa (BA)</option>
+                                <option value="FQ e VT">Fotoquadrado + Vídeo (FQ+VT)</option>
+                            </select>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
+                            <input type="number" step="0.000001" id="newStationLat"
+                                placeholder="Latitude decimal · Ex: -23.550520"
+                                title="Graus decimais — SIRGAS 2000 (EPSG:4674)" min="-34" max="5"
+                                style="padding:6px; border:1px solid #ccc; border-radius:4px;">
+                            <input type="number" step="0.000001" id="newStationLon"
+                                placeholder="Longitude decimal · Ex: -46.633309"
+                                title="Graus decimais — SIRGAS 2000 (EPSG:4674)" min="-74" max="-28"
+                                style="padding:6px; border:1px solid #ccc; border-radius:4px;">
+                        </div>
+                        <textarea id="newStationDesc" placeholder="Descrição / Referência de localização" rows="1"
+                            style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px; margin-bottom:8px;"></textarea>
+                        <button onclick="createStation()"
+                            style="width:100%; padding:8px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer;">+
+                            Adicionar Estação</button>
+                    </div>
+
+                    <!-- List of Stations -->
+                    <h5 style="margin-bottom:8px;">Estações Cadastradas</h5>
+                    <div id="stationsListAdmin"
+                        style="max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
+                        <div style="color:#999; padding:10px; text-align:center;">Selecione uma ilha na aba 1 para gerenciar
+                            suas estações.</div>
+                    </div>
+                </div>
+
+                <!-- Sub-aba: Cadastro em Lote -->
+                <div id="estSubContentLote" style="display:none; padding:0 10px 10px 10px;">
+                    <div style="font-size:12px; color:#4d6778; margin-bottom:10px; padding:8px 10px; background:#f0f8ff; border-radius:6px; border:1px solid #b8d4e8;">
+                        Cadastre múltiplas estações de uma só vez. Preencha os dados de cada ponto e clique em "Adicionar Linha" para incluir mais estações. Ao finalizar, clique em "Salvar Todas".
+                    </div>
+
+                    <div style="margin-bottom:10px;">
+                        <label style="display:block; margin-bottom:4px; font-size:12px; font-weight:700; color:#36566f;">Ilha de destino</label>
+                        <select id="batchStationIlhaSelect"
+                            style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ccc; background:#fff; color:#333; font-size:13px;">
+                            <option value="">-- Selecione a ilha --</option>
+                        </select>
+                    </div>
+
+                    <div id="batchStationRows" style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px; max-height:260px; overflow-y:auto;">
+                        <!-- Rows geradas por JS -->
+                    </div>
+
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+                        <button type="button" onclick="addBatchStationRow()"
+                            style="padding:7px 14px; border:1px solid #0f8bb3; border-radius:6px; background:#edf8fd; color:#0f4f67; font-size:12px; font-weight:700; cursor:pointer;">+ Adicionar Linha</button>
+                        <button type="button" onclick="clearBatchStationRows()"
+                            style="padding:7px 14px; border:1px solid #c5d8e3; border-radius:6px; background:#fff; color:#5a7d8f; font-size:12px; cursor:pointer;">Limpar tudo</button>
+                    </div>
+
+                    <button type="button" onclick="submitBatchStations()"
+                        style="width:100%; padding:10px; border:none; border-radius:8px; background:#28a745; color:#fff; font-weight:700; cursor:pointer; font-size:13px;">Salvar Todas as Estações</button>
+                    <div id="batchStationResult" style="display:none; margin-top:10px; padding:8px 12px; border-radius:6px; font-size:12px;"></div>
                 </div>
             </div>
         </div>
@@ -709,10 +860,12 @@
         <h4 style="margin-top:0;">Detalhes do Coral-sol</h4>
         <p style="font-size:12px; color:#666; margin-bottom:15px;">Preencha os dados ambientais e da ocorrência.</p>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
             <div><label style="font-size:12px;">Data</label><input type="date" id="coralData"
                     style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
-            <div><label style="font-size:12px;">Hora</label><input type="time" id="coralHora"
+            <div><label style="font-size:12px;">Hora Início</label><input type="time" id="coralHora"
+                    style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
+            <div><label style="font-size:12px;">Hora Fim</label><input type="time" id="coralHoraFim"
                     style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
         </div>
 
@@ -734,6 +887,12 @@
             <label style="display:block; margin-bottom:5px; font-size:12px;">IAR</label>
             <input type="number" step="0.0001" id="coralIAR"
                 style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+        </div>
+
+        <div style="margin-bottom:10px;">
+            <label style="display:block; margin-bottom:5px; font-size:12px;">Arquivo Percurso Coral Sol (Upload .kml)</label>
+            <input type="file" id="coralPercursoFile" accept=".kml,.kmz"
+                style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
         </div>
 
         <div style="margin-bottom:15px;">

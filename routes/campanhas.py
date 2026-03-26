@@ -35,6 +35,16 @@ def get_url(url: Optional[str]) -> Optional[str]:
     return blob_service.get_sas_url(url) if blob_service and url else url
 
 
+def normalize_dados_meteo(payload: Optional[dict]) -> Optional[dict]:
+    if not isinstance(payload, dict):
+        return payload
+    normalized = dict(payload)
+    for url_key in ("imagem_meteo_url", "arquivo_percurso_url", "transecto_kml_url"):
+        if normalized.get(url_key):
+            normalized[url_key] = get_url(normalized[url_key])
+    return normalized
+
+
 def classify_campaign_recency(campaign_date):
     if not campaign_date:
         return "red", None
@@ -100,8 +110,8 @@ def collect_campaign_folder_media_urls(campanha, ilha_ids):
         return []
 
     folder_name = f"{campanha.id}_{campanha.codigo}"
-    media_exts = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".mov", ".avi"}
-    video_exts = {".mp4", ".mov", ".avi"}
+    media_exts = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".mov", ".avi", ".webm"}
+    video_exts = {".mp4", ".mov", ".avi", ".webm"}
     items = []
 
     for ilha_id in ilha_ids or []:
@@ -134,8 +144,8 @@ def collect_campaign_azure_media_urls(campanha, ilha_ids):
         return []
 
     folder_name = f"{campanha.id}_{campanha.codigo}"
-    media_exts = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".mov", ".avi"}
-    video_exts = {".mp4", ".mov", ".avi"}
+    media_exts = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".mov", ".avi", ".webm"}
+    video_exts = {".mp4", ".mov", ".avi", ".webm"}
     items = []
 
     try:
@@ -414,9 +424,10 @@ class IlhaSelecao(BaseModel):
     selecao: List[PontosSelecao] = []
 
 class CampanhaCreate(BaseModel):
-    ilhas: List[IlhaSelecao]
+    ilhas: List[IlhaSelecao] = []
     nome: str
     data: str
+    data_fim: Optional[str] = None
     descricao: Optional[str] = ""
     base_apoio_id: Optional[int] = None
     embarcacao_id: Optional[int] = None
@@ -426,7 +437,7 @@ class CampanhaCreate(BaseModel):
 async def get_all_campanhas(db: Session = Depends(get_db)):
     """Retorna lista de todas as campanhas de todas as ilhas para o filtro global"""
     # Eager load ilhas
-    campanhas = db.query(Campanha).options(subqueryload(Campanha.ilhas)).order_by(desc(Campanha.data_campanha)).all()
+    campanhas = db.query(Campanha).options(subqueryload(Campanha.ilhas)).filter(Campanha.deleted_at.is_(None)).order_by(desc(Campanha.data_campanha)).all()
     
     result = []
     for c in campanhas:
@@ -447,13 +458,14 @@ async def get_all_campanhas(db: Session = Depends(get_db)):
             "db_id": c.id,
             "nome": c.nome,
             "data": c.data_campanha.strftime("%Y-%m-%d"),
+            "data_fim": c.data_fim.strftime("%Y-%m-%d") if c.data_fim else None,
             "ilha_id": island_ids[0] if island_ids else c.ilha_id,
             "ilha_nome": island_names[0] if island_names else None,
             "ilha_ids": island_ids,
-            "ilha_names": island_names, # List of strings
+            "ilha_names": island_names,
             "status": c.status
         })
-        
+
     return JSONResponse(content={"campanhas": result})
 
 
@@ -670,35 +682,45 @@ async def get_campanhas_ilha(ilha_id: str, db: Session = Depends(get_db)):
 async def create_campanha(campanha: CampanhaCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_active_user)):
     """Cria nova campanha para uma ou mais ilhas com pontos amostrais selecionados"""
     
-    if not campanha.ilhas:
-        raise HTTPException(status_code=400, detail="Pelo menos uma ilha deve ser selecionada")
-
     ilha_ids = [i.ilha_id for i in campanha.ilhas]
-    
+
     try:
-        # Link Ilhas
-        db_ilhas = db.query(Ilha).filter(Ilha.id.in_(ilha_ids)).all()
-        if len(db_ilhas) != len(ilha_ids):
-             raise HTTPException(status_code=404, detail="Uma ou mais ilhas não encontradas")
+        # Link Ilhas (optional — may be empty on creation)
+        db_ilhas = []
+        if ilha_ids:
+            db_ilhas = db.query(Ilha).filter(Ilha.id.in_(ilha_ids)).all()
+            if len(db_ilhas) != len(ilha_ids):
+                raise HTTPException(status_code=404, detail="Uma ou mais ilhas não encontradas")
+
+        # Verifica duplicata: mesmo nome + mesma data
+        existing = db.query(Campanha).filter(
+            Campanha.nome == campanha.nome,
+            Campanha.data_campanha == campanha.data,
+            Campanha.deleted_at == None
+        ).first()
+        if existing:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Já existe uma campanha '{campanha.nome}' com a data {campanha.data}. Use a campanha existente ou escolha outra data."
+            )
 
         # 1. Create Campanha DB Record
-        
-        # Use first ilha as 'primary' for legacy column if needed, or None
-        primary_ilha_id = ilha_ids[0]
+        primary_ilha_id = ilha_ids[0] if ilha_ids else None
         codigo = str(uuid4())
         while db.query(Campanha.id).filter(Campanha.codigo == codigo).first():
             codigo = str(uuid4())
-        
+
         new_campanha = Campanha(
-            ilha_id=primary_ilha_id, # Legacy/Primary
+            ilha_id=primary_ilha_id,
             nome=campanha.nome,
             data_campanha=campanha.data,
+            data_fim=campanha.data_fim if campanha.data_fim else None,
             codigo=codigo,
             descricao=campanha.descricao,
             base_apoio_id=campanha.base_apoio_id,
             embarcacao_id=campanha.embarcacao_id
         )
-        
+
         new_campanha.ilhas = db_ilhas
         
         # Link Team Members
@@ -726,12 +748,12 @@ async def create_campanha(campanha: CampanhaCreate, db: Session = Depends(get_db
                         )
                         db.add(new_estacao)
         
-        # 3. Create Folder Structure for EACH Island
+        # 3. Create Folder Structure (one per island, or a generic one if no islands yet)
         folder_name = f"{new_campanha.id}_{new_campanha.codigo}"
-        
+
         for ilha_id in ilha_ids:
             campanha_service.create_campanha(
-                ilha_id=str(ilha_id), 
+                ilha_id=str(ilha_id),
                 nome=campanha.nome,
                 data=campanha.data,
                 descricao=campanha.descricao,
@@ -756,21 +778,59 @@ async def create_campanha(campanha: CampanhaCreate, db: Session = Depends(get_db
 
 @router.get("/campanhas/{campanha_id}")
 async def get_campanha(campanha_id: str, db: Session = Depends(get_db)):
-    """Retorna detalhes básicos de uma campanha pelo ID"""
-    campanha = ensure_campanha_exists(campanha_id, db)
+    """Retorna detalhes completos de uma campanha pelo ID"""
+    campanha = db.query(Campanha).options(
+        subqueryload(Campanha.ilhas),
+        subqueryload(Campanha.equipe),
+        joinedload(Campanha.base_apoio),
+        joinedload(Campanha.embarcacao),
+        subqueryload(Campanha.estacoes_amostrais).joinedload(EstacaoAmostral.espaco_amostral),
+    ).filter(Campanha.codigo == campanha_id).first()
+    if not campanha:
+        raise HTTPException(status_code=404, detail="Campanha não encontrada")
 
-    return {
+    estacoes = [
+        {
+            "id": e.id,
+            "numero": e.numero,
+            "espaco_codigo": e.espaco_amostral.codigo if e.espaco_amostral else None,
+            "espaco_nome": e.espaco_amostral.nome if e.espaco_amostral else None,
+        }
+        for e in campanha.estacoes_amostrais
+        if not e.deleted_at
+    ]
+
+    equipe = [
+        {"id": m.id, "nome": m.nome_completo}
+        for m in (campanha.equipe or [])
+    ]
+
+    base = None
+    if campanha.base_apoio:
+        base = {"id": campanha.base_apoio.id, "nome": campanha.base_apoio.nome}
+
+    embarcacao = None
+    if campanha.embarcacao:
+        embarcacao = {"id": campanha.embarcacao.id, "nome": campanha.embarcacao.nome}
+
+    return JSONResponse(content={
         "id": campanha.codigo,
         "uuid": campanha.codigo,
         "db_id": campanha.id,
         "nome": campanha.nome,
-        "data": campanha.data_campanha,
+        "data": campanha.data_campanha.isoformat() if campanha.data_campanha else None,
+        "data_fim": campanha.data_fim.isoformat() if campanha.data_fim else None,
         "ilha_id": campanha.ilha_id,
         "ilha_ids": [ilha.id for ilha in campanha.ilhas],
         "ilha_nomes": [ilha.nome for ilha in campanha.ilhas],
         "status": campanha.status,
-        "descricao": campanha.descricao
-    }
+        "descricao": campanha.descricao,
+        "base_apoio": base,
+        "embarcacao": embarcacao,
+        "equipe": equipe,
+        "estacoes": estacoes,
+        "num_estacoes": len(estacoes),
+    })
 
 
 class CampanhaUpdate(BaseModel):
@@ -812,6 +872,72 @@ async def update_campanha(campanha_id: str, payload: CampanhaUpdate, db: Session
             "status": campanha.status,
         }
     }
+
+
+class IlhasPontosPayload(BaseModel):
+    ilhas: List[IlhaSelecao] = []
+
+
+@router.post("/campanhas/{campanha_id}/ilhas-pontos")
+async def associar_ilhas_pontos(
+    campanha_id: str,
+    payload: IlhasPontosPayload,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_active_user),
+):
+    """Associa ilhas e pontos amostrais a uma campanha existente (substituição completa)."""
+    campanha = ensure_campanha_exists(campanha_id, db)
+
+    ilha_ids = [i.ilha_id for i in payload.ilhas]
+
+    try:
+        # Atualiza relação de ilhas
+        if ilha_ids:
+            db_ilhas = db.query(Ilha).filter(Ilha.id.in_(ilha_ids)).all()
+            if len(db_ilhas) != len(ilha_ids):
+                raise HTTPException(status_code=404, detail="Uma ou mais ilhas não encontradas")
+            campanha.ilhas = db_ilhas
+            if not campanha.ilha_id:
+                campanha.ilha_id = ilha_ids[0]
+        else:
+            campanha.ilhas = []
+
+        # Remove estações existentes e recria conforme seleção
+        from db.models import EstacaoAmostral
+        db.query(EstacaoAmostral).filter(EstacaoAmostral.campanha_id == campanha.id).delete()
+
+        for ilha_sel in payload.ilhas:
+            for pts_sel in ilha_sel.selecao:
+                for ponto_num in pts_sel.pontos:
+                    if 1 <= ponto_num <= 8:
+                        db.add(EstacaoAmostral(
+                            campanha_id=campanha.id,
+                            espaco_amostral_id=pts_sel.espaco_amostral_id,
+                            numero=ponto_num,
+                            data=campanha.data_campanha,
+                        ))
+
+        # Cria pastas de upload para novas ilhas (idempotente)
+        folder_name = f"{campanha.id}_{campanha.codigo}"
+        for ilha_id in ilha_ids:
+            campanha_service.create_campanha(
+                ilha_id=str(ilha_id),
+                nome=campanha.nome,
+                data=campanha.data_campanha.isoformat() if campanha.data_campanha else "",
+                descricao=campanha.descricao or "",
+                custom_id=folder_name,
+            )
+
+        db.commit()
+        db.refresh(campanha)
+        return {"success": True, "campanha": campanha.to_dict()}
+
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.delete("/campanhas/{campanha_id}")
@@ -971,6 +1097,8 @@ async def upload_media(campanha_id: str, ilha_id: str, files: List[UploadFile] =
             campanha_id=folder_name,
             files=file_list
         )
+        from routes.imagens import _invalidate_galeria_cache
+        _invalidate_galeria_cache()
         return JSONResponse(content={
             "success": True,
             "uploaded": len(uploaded_files),
@@ -982,19 +1110,138 @@ async def upload_media(campanha_id: str, ilha_id: str, files: List[UploadFile] =
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/campanhas/{campanha_id}/files")
-async def get_campanha_files(campanha_id: str, ilha_id: str, db: Session = Depends(get_db)):
-    """Lista todos os arquivos de uma campanha"""
-    
+@router.post("/campanhas/{campanha_id}/upload")
+async def upload_typed_file(
+    campanha_id: str,
+    ilha_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_active_user),
+):
+    """
+    Upload de arquivo único com organização automática por tipo no blob:
+      kml/    → .kml .kmz .geojson .json .shp .zip
+      excel/  → .xls .xlsx .csv
+      videos/ → .mp4 .mov .avi
+      images/ → .jpg .jpeg .png e demais imagens
+    Retorna a URL pública do arquivo salvo.
+    """
     campanha = ensure_campanha_exists(campanha_id, db)
-        
     folder_name = f"{campanha.id}_{campanha.codigo}"
-    
+
     if not campanha_service.campanha_exists(str(ilha_id), folder_name):
-        raise HTTPException(status_code=404, detail="Campanha não encontrada na pasta")
-    
-    files = file_service.list_files(str(ilha_id), folder_name)
-    return JSONResponse(content=files)
+        campanha_service.create_campanha(
+            ilha_id=str(ilha_id),
+            nome=campanha.nome,
+            data=str(campanha.data_campanha),
+            descricao=campanha.descricao or "",
+            custom_id=folder_name,
+        )
+
+    try:
+        result = file_service.save_typed_file(
+            ilha_id=str(ilha_id),
+            campanha_id=folder_name,
+            file_data=file.file,
+            filename=file.filename,
+        )
+        from routes.imagens import _invalidate_galeria_cache
+        _invalidate_galeria_cache()
+        return JSONResponse(content={"success": True, "url": result["url"], "folder": result["folder"]})
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        import traceback
+        print(f"[upload_typed_file] ERROR: {e}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/campanhas/{campanha_id}/files")
+async def get_campanha_files(campanha_id: str, ilha_id: Optional[str] = None, db: Session = Depends(get_db)):
+    """Lista todos os arquivos de uma campanha"""
+
+    campanha = ensure_campanha_exists(campanha_id, db)
+    folder_name = f"{campanha.id}_{campanha.codigo}"
+
+    # Se ilha_id não informado, tenta todas as ilhas da campanha
+    ilha_ids_to_try = [ilha_id] if ilha_id else [str(i.id) for i in campanha.ilhas]
+    if not ilha_ids_to_try:
+        return JSONResponse(content={"geospatial": [], "media": []})
+
+    merged: dict = {"geospatial": [], "media": []}
+    for iid in ilha_ids_to_try:
+        if campanha_service.campanha_exists(iid, folder_name):
+            files = file_service.list_files(iid, folder_name)
+            merged["geospatial"].extend(files.get("geospatial", []))
+            merged["media"].extend(files.get("media", []))
+    return JSONResponse(content=merged)
+
+
+@router.get("/download")
+async def download_blob_file(url: str, filename: Optional[str] = None):
+    """
+    Proxy de download: busca a URL do blob e serve com Content-Disposition: attachment,
+    garantindo que o browser faça o download (não renderize) arquivos como KML.
+    """
+    import urllib.request
+    import urllib.parse
+    from fastapi.responses import Response as FastResponse
+
+    if not url:
+        raise HTTPException(status_code=400, detail="URL inválida")
+
+    parsed_url = urllib.parse.urlparse(url)
+    local_path = parsed_url.path if parsed_url.path.startswith("/uploads/") else None
+    is_remote = url.startswith("http")
+    if not is_remote and not local_path:
+        raise HTTPException(status_code=400, detail="URL invalida")
+
+    source_name = parsed_url.path.split("/")[-1] if parsed_url.path else ""
+    dl_filename = filename or urllib.parse.unquote(source_name.split("?")[0]) or "download"
+
+    ext = Path(dl_filename).suffix.lower()
+    content_type_map = {
+        ".kml": "application/vnd.google-earth.kml+xml",
+        ".kmz": "application/vnd.google-earth.kmz",
+        ".geojson": "application/geo+json",
+        ".json": "application/json",
+        ".xls": "application/vnd.ms-excel",
+        ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ".csv": "text/csv",
+        ".ods": "application/vnd.oasis.opendocument.spreadsheet",
+        ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".mp4": "video/mp4", ".mov": "video/quicktime",
+        ".zip": "application/zip",
+    }
+    media_type = content_type_map.get(ext, "application/octet-stream")
+
+    if local_path:
+        rel_path = urllib.parse.unquote(local_path.removeprefix("/uploads/"))
+        full_path = (UPLOAD_DIR / rel_path).resolve()
+        upload_root = UPLOAD_DIR.resolve()
+        try:
+            full_path.relative_to(upload_root)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="URL local invalida") from exc
+        if not full_path.exists() or not full_path.is_file():
+            raise HTTPException(status_code=404, detail="Arquivo nao encontrado")
+        content = full_path.read_bytes()
+    else:
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "MineralPBZ01/1.0"})
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                if resp.status != 200:
+                    raise HTTPException(status_code=502, detail=f"Blob retornou {resp.status}")
+                content = resp.read()
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Erro ao buscar arquivo: {e}")
+
+    return FastResponse(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{dl_filename}"'},
+    )
 
 
 @router.get("/campanhas/{campanha_id}/geojson")
@@ -1082,21 +1329,21 @@ async def get_campanha_geojson(campanha_id: str, ilha_id: Optional[str] = None, 
 
 
 @router.get("/campanhas/{campanha_id}/media-list")
-async def get_campanha_media_list(campanha_id: str, ilha_id: str, db: Session = Depends(get_db)):
+async def get_campanha_media_list(campanha_id: str, ilha_id: Optional[str] = None, db: Session = Depends(get_db)):
     """Lista arquivos de mídia com URLs de acesso"""
     
     campanha = ensure_campanha_exists(campanha_id, db)
-        
     folder_name = f"{campanha.id}_{campanha.codigo}"
-    
-    # Check FS existence (optional, but good for safety)
-    if not campanha_service.campanha_exists(str(ilha_id), folder_name):
-         # If folder is missing but DB exists, maybe we return empty list or specific error?
-         # For now, let's just return empty list or handle gracefully
-         return JSONResponse(content={"media": []})
-    
-    media_list = file_service.get_media_list(str(ilha_id), folder_name)
-    return JSONResponse(content={"media": media_list})
+
+    ilha_ids_to_try = [ilha_id] if ilha_id else [str(i.id) for i in campanha.ilhas]
+    if not ilha_ids_to_try:
+        return JSONResponse(content={"media": []})
+
+    all_media = []
+    for iid in ilha_ids_to_try:
+        if campanha_service.campanha_exists(iid, folder_name):
+            all_media.extend(file_service.get_media_list(iid, folder_name))
+    return JSONResponse(content={"media": all_media})
 
 
 @router.get("/campanhas/{campanha_id}/kml/arquivos")
@@ -1275,6 +1522,7 @@ async def get_campanha_full_details(campanha_id: str, db: Session = Depends(get_
         for b in estacao.buscas_ativas:
             if b.deleted_at:
                 continue
+            dados_meteo = normalize_dados_meteo(b.dados_meteo)
             buscas.append({
                 "id": b.id,
                 "estacao": estacao.numero,
@@ -1293,13 +1541,15 @@ async def get_campanha_full_details(campanha_id: str, db: Session = Depends(get_
                 "encontrou_coralsol": b.encontrou_coral_sol,
                 "excel_url": get_url(b.planilha_excel_url),
                 "track_url": get_url(b.arquivo_percurso_url),
-                "dados_meteo": b.dados_meteo
+                "dados_meteo": dados_meteo,
+                "meteo_url": dados_meteo.get("imagem_meteo_url") if isinstance(dados_meteo, dict) else None,
             })
             
         # Video Transecto
         for v in estacao.video_transectos:
             if v.deleted_at:
                 continue
+            dados_meteo = normalize_dados_meteo(v.dados_meteo)
             videos.append({
                 "id": v.id,
                 "estacao": estacao.numero,
@@ -1317,13 +1567,17 @@ async def get_campanha_full_details(campanha_id: str, db: Session = Depends(get_
                 "shannon": float(v.diversidade_shannon) if v.diversidade_shannon else None,
                 "jaccard": float(v.equitabilidade_jaccard) if v.equitabilidade_jaccard else None,
                 "video_url": get_url(v.video_url),
-                "dados_meteo": v.dados_meteo
+                "track_url": dados_meteo.get("arquivo_percurso_url") if isinstance(dados_meteo, dict) else None,
+                "transecto_kml_url": dados_meteo.get("transecto_kml_url") if isinstance(dados_meteo, dict) else None,
+                "dados_meteo": dados_meteo,
+                "meteo_url": dados_meteo.get("imagem_meteo_url") if isinstance(dados_meteo, dict) else None,
             })
             
         # Foto Quadrado
         for f in estacao.fotoquadrados:
             if f.deleted_at:
                 continue
+            dados_meteo = normalize_dados_meteo(f.dados_meteo)
             fotos.append({
                 "id": f.id,
                 "estacao": estacao.numero,
@@ -1338,7 +1592,9 @@ async def get_campanha_full_details(campanha_id: str, db: Session = Depends(get_
                 "riqueza": float(f.riqueza_especifica) if f.riqueza_especifica else None,
                 "shannon": float(f.diversidade_shannon) if f.diversidade_shannon else None,
                 "mosaico_url": get_url(f.imagem_mosaico_url),
-                "dados_meteo": f.dados_meteo
+                "track_url": dados_meteo.get("arquivo_percurso_url") if isinstance(dados_meteo, dict) else None,
+                "dados_meteo": dados_meteo,
+                "meteo_url": dados_meteo.get("imagem_meteo_url") if isinstance(dados_meteo, dict) else None,
             })
             
     return JSONResponse(content={

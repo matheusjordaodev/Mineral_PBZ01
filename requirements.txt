@@ -11,3 +11,4 @@ python-jose[cryptography]
 jinja2
 matplotlib
 azure-storage-blob
+pyproj

@@ -24,13 +24,22 @@ MEDIA_TYPES = {
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
     '.png': 'image/png',
+    '.webp': 'image/webp',
+    '.gif': 'image/gif',
     '.mp4': 'video/mp4',
     '.mov': 'video/quicktime',
     '.avi': 'video/x-msvideo',
+    '.webm': 'video/webm',
     '.kml': 'application/vnd.google-earth.kml+xml',
     '.kmz': 'application/vnd.google-earth.kmz',
     '.geojson': 'application/geo+json',
-    '.json': 'application/json'
+    '.json': 'application/json',
+    '.xls': 'application/vnd.ms-excel',
+    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    '.csv': 'text/csv',
+    '.ods': 'application/vnd.oasis.opendocument.spreadsheet',
+    '.zip': 'application/zip',
+    '.shp': 'application/octet-stream',
 }
 
 

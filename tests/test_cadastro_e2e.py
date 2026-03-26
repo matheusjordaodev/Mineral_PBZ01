@@ -32,7 +32,7 @@ import urllib.parse
 from datetime import date
 
 BASE_HOST = "localhost"
-BASE_PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
+BASE_PORT = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 8000
 
 # compatibilidade com terminais Windows (cp1252)
 sys.stdout.reconfigure(encoding="utf-8", errors="replace") if hasattr(sys.stdout, "reconfigure") else None

@@ -109,6 +109,13 @@ def init_db():
             else:
                 raise
 
+    # Migration: adiciona data_fim em campanhas (idempotente via IF NOT EXISTS)
+    with engine.begin() as conn:
+        _safe_exec(conn, """
+            ALTER TABLE campanhas
+            ADD COLUMN IF NOT EXISTS data_fim DATE;
+        """)
+
     # Migration: adiciona espaco_amostral_id em feicoes_kml (idempotente via IF NOT EXISTS)
     with engine.begin() as conn:
         _safe_exec(conn, """

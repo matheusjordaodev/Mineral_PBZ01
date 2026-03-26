@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from db.models import (
     BuscaAtiva,
     Campanha,
+    EspacoAmostral,
     EstacaoAmostral,
     Fotoquadrado,
     ProtocoloDAFOR,
@@ -59,14 +60,53 @@ def ensure_campanha_exists(campanha_ref: Any, db: Session) -> Campanha:
     return campanha
 
 
+def get_or_create_estacao(
+    campanha: Campanha,
+    espaco_amostral_id: int,
+    db: Session,
+) -> EstacaoAmostral:
+    """Retorna a EstacaoAmostral existente para o par (campanha, espaco_amostral)
+    ou cria uma nova automaticamente se ainda não existir."""
+    espaco = db.query(EspacoAmostral).filter(EspacoAmostral.id == espaco_amostral_id).first()
+    if not espaco:
+        raise HTTPException(status_code=404, detail="Espaço amostral não encontrado.")
+
+    estacao = (
+        db.query(EstacaoAmostral)
+        .filter(
+            EstacaoAmostral.campanha_id == campanha.id,
+            EstacaoAmostral.espaco_amostral_id == espaco_amostral_id,
+            EstacaoAmostral.deleted_at.is_(None),
+        )
+        .first()
+    )
+
+    if not estacao:
+        estacao = EstacaoAmostral(
+            campanha_id=campanha.id,
+            espaco_amostral_id=espaco_amostral_id,
+        )
+        db.add(estacao)
+        db.flush()
+
+    return estacao
+
+
 def resolve_estacao_for_campanha(
     campanha_ref: Any,
     db: Session,
     estacao_amostral_id: Optional[int] = None,
+    espaco_amostral_id: Optional[int] = None,
 ) -> Tuple[Campanha, EstacaoAmostral]:
     campanha = ensure_campanha_exists(campanha_ref, db)
     campanha_id = campanha.id
 
+    # Novo fluxo: recebeu espaco_amostral_id — cria EstacaoAmostral se não existir
+    if espaco_amostral_id is not None:
+        estacao = get_or_create_estacao(campanha, espaco_amostral_id, db)
+        return campanha, estacao
+
+    # Fluxo legado: recebeu estacao_amostral_id diretamente
     query = (
         db.query(EstacaoAmostral)
         .filter(
@@ -82,7 +122,7 @@ def resolve_estacao_for_campanha(
             return campanha, estacoes[0]
         raise HTTPException(
             status_code=400,
-            detail="Informe estacao_amostral_id para campanhas com multiplas estacoes.",
+            detail="Informe estacao_amostral_id ou espaco_amostral_id.",
         )
 
     estacao = query.filter(EstacaoAmostral.id == estacao_amostral_id).first()
@@ -121,7 +161,9 @@ def create_busca_ativa(
     payload: Dict[str, Any],
 ) -> BuscaAtiva:
     _, estacao = resolve_estacao_for_campanha(
-        campanha_id, db, payload.get("estacao_amostral_id")
+        campanha_id, db,
+        estacao_amostral_id=payload.get("estacao_amostral_id"),
+        espaco_amostral_id=payload.get("espaco_amostral_id"),
     )
 
     inicio = normalize_datetime(payload.get("data_hora_inicio"))
@@ -236,7 +278,9 @@ def create_video_transecto(
     payload: Dict[str, Any],
 ) -> VideoTransecto:
     _, estacao = resolve_estacao_for_campanha(
-        campanha_id, db, payload.get("estacao_amostral_id")
+        campanha_id, db,
+        estacao_amostral_id=payload.get("estacao_amostral_id"),
+        espaco_amostral_id=payload.get("espaco_amostral_id"),
     )
 
     data_hora = normalize_datetime(payload.get("data_hora"))
@@ -252,6 +296,10 @@ def create_video_transecto(
     dados_meteo: Dict[str, Any] = {}
     if isinstance(payload.get("dados_meteo"), dict):
         dados_meteo.update(payload["dados_meteo"])
+    if payload.get("arquivo_percurso_url"):
+        dados_meteo.setdefault("arquivo_percurso_url", payload["arquivo_percurso_url"])
+    if payload.get("transecto_kml_url"):
+        dados_meteo.setdefault("transecto_kml_url", payload["transecto_kml_url"])
     if payload.get("nome_video"):
         dados_meteo.setdefault("nome_video", payload["nome_video"])
     if observacoes:
@@ -284,7 +332,9 @@ def create_fotoquadrado(
     payload: Dict[str, Any],
 ) -> Fotoquadrado:
     _, estacao = resolve_estacao_for_campanha(
-        campanha_id, db, payload.get("estacao_amostral_id")
+        campanha_id, db,
+        estacao_amostral_id=payload.get("estacao_amostral_id"),
+        espaco_amostral_id=payload.get("espaco_amostral_id"),
     )
 
     data_hora = normalize_datetime(payload.get("data_hora"))
@@ -294,6 +344,8 @@ def create_fotoquadrado(
     dados_meteo: Dict[str, Any] = {}
     if isinstance(payload.get("dados_meteo"), dict):
         dados_meteo.update(payload["dados_meteo"])
+    if payload.get("arquivo_percurso_url"):
+        dados_meteo.setdefault("arquivo_percurso_url", payload["arquivo_percurso_url"])
     if payload.get("observacoes"):
         dados_meteo.setdefault("observacoes", payload["observacoes"])
 

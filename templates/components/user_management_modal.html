@@ -258,12 +258,16 @@
         const panel = document.getElementById('passwordResetPanel');
         const target = document.getElementById('passwordResetTarget');
         const result = document.getElementById('passwordResetResult');
-        if (panel) panel.style.display = 'block';
         if (target) target.textContent = username;
         if (result) result.textContent = '';
-        document.getElementById('resetPasswordNew').value = '';
-        document.getElementById('resetPasswordConfirm').value = '';
-        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const newPwd = document.getElementById('resetPasswordNew');
+        const confirmPwd = document.getElementById('resetPasswordConfirm');
+        if (newPwd) newPwd.value = '';
+        if (confirmPwd) confirmPwd.value = '';
+        if (panel) {
+            panel.style.display = 'block';
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
     }
 
     function cancelUserPasswordChange() {

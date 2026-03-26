@@ -107,6 +107,7 @@ class Campanha(BaseModel):
     codigo = Column(String(100), unique=True, nullable=False)
     nome = Column(String(200), nullable=False)
     data_campanha = Column(Date, nullable=False, index=True)
+    data_fim = Column(Date, nullable=True)
     descricao = Column(Text)
     status = Column(String(50), default='ativa', index=True)
     
@@ -132,6 +133,7 @@ class Campanha(BaseModel):
             "codigo": self.codigo,
             "nome": self.nome,
             "data": self.data_campanha.isoformat() if self.data_campanha else None,
+            "data_fim": self.data_fim.isoformat() if self.data_fim else None,
             "descricao": self.descricao,
             "status": self.status
         }

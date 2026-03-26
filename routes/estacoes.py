@@ -1,6 +1,6 @@
 import json
 from datetime import date, datetime, time, timedelta
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, subqueryload
@@ -190,6 +190,101 @@ async def get_estacoes(campanha_id: str, db: Session = Depends(get_db)):
             }
         )
     return result
+
+
+@router.get("/campanhas/{campanha_id}/pontos-amostrais")
+async def get_pontos_amostrais(campanha_id: str, ilha_id: Optional[int] = None, db: Session = Depends(get_db)):
+    campanha = ensure_campanha_exists(campanha_id, db)
+    allowed_ilha_ids = {
+        ilha.id
+        for ilha in (campanha.ilhas or [])
+        if getattr(ilha, "deleted_at", None) is None
+    }
+    if campanha.ilha_id:
+        allowed_ilha_ids.add(campanha.ilha_id)
+
+    if ilha_id is not None:
+        if ilha_id not in allowed_ilha_ids:
+            return []
+        target_ilha_ids = [ilha_id]
+    else:
+        target_ilha_ids = sorted(allowed_ilha_ids)
+
+    if not target_ilha_ids:
+        return []
+
+    pontos = (
+        db.query(EspacoAmostral)
+        .options(subqueryload(EspacoAmostral.ilha))
+        .filter(
+            EspacoAmostral.ilha_id.in_(target_ilha_ids),
+            EspacoAmostral.deleted_at.is_(None),
+        )
+        .order_by(EspacoAmostral.id.asc())
+        .all()
+    )
+    if not pontos:
+        return []
+
+    point_ids = [ponto.id for ponto in pontos]
+    estacoes = (
+        db.query(EstacaoAmostral)
+        .options(
+            subqueryload(EstacaoAmostral.buscas_ativas),
+            subqueryload(EstacaoAmostral.video_transectos),
+            subqueryload(EstacaoAmostral.fotoquadrados),
+        )
+        .filter(
+            EstacaoAmostral.campanha_id == campanha.id,
+            EstacaoAmostral.espaco_amostral_id.in_(point_ids),
+            EstacaoAmostral.deleted_at.is_(None),
+        )
+        .order_by(EstacaoAmostral.id.asc())
+        .all()
+    )
+
+    stats_by_point: Dict[int, Dict[str, Any]] = {}
+    for estacao in estacoes:
+        if estacao.espaco_amostral_id is None:
+            continue
+        stats = stats_by_point.setdefault(
+            estacao.espaco_amostral_id,
+            {
+                "num_buscas": 0,
+                "num_videos": 0,
+                "num_fotos": 0,
+                "estacoes_ids": [],
+                "estacoes_numeros": [],
+            },
+        )
+        stats["num_buscas"] += len([item for item in estacao.buscas_ativas if not item.deleted_at])
+        stats["num_videos"] += len([item for item in estacao.video_transectos if not item.deleted_at])
+        stats["num_fotos"] += len([item for item in estacao.fotoquadrados if not item.deleted_at])
+        stats["estacoes_ids"].append(estacao.id)
+        if estacao.numero is not None:
+            stats["estacoes_numeros"].append(estacao.numero)
+
+    result = []
+    for ponto in pontos:
+        stats = stats_by_point.get(ponto.id) or {}
+        result.append(
+            {
+                "id": ponto.id,
+                "espaco_amostral_id": ponto.id,
+                "codigo": ponto.codigo,
+                "nome": ponto.nome,
+                "metodologia": ponto.metodologia,
+                "ilha_id": ponto.ilha_id,
+                "ilha_nome": ponto.ilha.nome if getattr(ponto, "ilha", None) else None,
+                "num_buscas": stats.get("num_buscas", 0),
+                "num_videos": stats.get("num_videos", 0),
+                "num_fotos": stats.get("num_fotos", 0),
+                "estacoes_ids": stats.get("estacoes_ids", []),
+                "estacoes_numeros": stats.get("estacoes_numeros", []),
+            }
+        )
+
+    return sorted(result, key=lambda item: (str(item.get("codigo") or ""), item["espaco_amostral_id"]))
 
 
 @router.get("/campanhas/{campanha_id}/metodos")

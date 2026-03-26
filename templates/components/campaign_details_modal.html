@@ -28,10 +28,15 @@
                         Gerais</h4>
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px; color: #333;">
                         <div><strong>Nome:</strong> <span id="cdNome"></span></div>
-                        <div><strong>Ilha:</strong> <span id="cdIlha"></span></div>
-                        <div><strong>Data:</strong> <span id="cdData"></span></div>
+                        <div><strong>Ilha(s):</strong> <span id="cdIlha"></span></div>
+                        <div><strong>Data Início:</strong> <span id="cdData"></span></div>
+                        <div><strong>Data Fim:</strong> <span id="cdDataFim"></span></div>
                         <div><strong>Status:</strong> <span id="cdStatus"></span></div>
+                        <div><strong>Base de Apoio:</strong> <span id="cdBase"></span></div>
+                        <div><strong>Embarcação:</strong> <span id="cdEmbarcacao"></span></div>
+                        <div><strong>Equipe de Campo:</strong> <span id="cdEquipe"></span></div>
                         <div style="grid-column: span 2;"><strong>Descrição:</strong> <span id="cdDesc"></span></div>
+                        <div style="grid-column: span 2;"><strong>Estações Amostrais:</strong> <span id="cdEstacoes"></span></div>
                     </div>
                 </div>
 
@@ -435,8 +440,13 @@
         document.getElementById('cdNome').textContent = "Carregando...";
         document.getElementById('cdIlha').textContent = "";
         document.getElementById('cdData').textContent = "";
+        document.getElementById('cdDataFim').textContent = "";
         document.getElementById('cdStatus').textContent = "";
+        document.getElementById('cdBase').textContent = "";
+        document.getElementById('cdEmbarcacao').textContent = "";
+        document.getElementById('cdEquipe').textContent = "";
         document.getElementById('cdDesc').textContent = "";
+        document.getElementById('cdEstacoes').textContent = "";
         document.getElementById('campaignDetailGallery').innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #777;">Carregando mídia...</div>';
         document.getElementById('campaignDetailFiles').innerHTML = '<li style="color: #777;">Carregando arquivos...</li>';
         document.getElementById('cdBuscaBody').innerHTML = '<tr><td colspan="10">Carregando...</td></tr>';
@@ -456,22 +466,27 @@
                 .then(r => r.ok ? r.json() : null)
                 .then(c => {
                     if (!c) return;
-                    const dataStr = c.data ? (typeof c.data === 'string' ? c.data : new Date(c.data).toISOString().slice(0,10)) : '';
+                    const fmtDate = d => d ? (typeof d === 'string' ? d.slice(0,10) : new Date(d).toISOString().slice(0,10)) : 'Não informada';
+                    const statusLabels = { ativa: 'Ativa', concluida: 'Concluída', cancelada: 'Cancelada', planejada: 'Planejada' };
                     document.getElementById('cdNome').textContent = c.nome || campanhaNome;
-                    document.getElementById('cdIlha').textContent = (c.ilha_nomes || []).join(', ') || ('ID: ' + ilhaId);
-                    document.getElementById('cdData').textContent = dataStr;
-                    document.getElementById('cdStatus').textContent = c.status || '';
-                    document.getElementById('cdDesc').textContent = c.descricao || '';
+                    document.getElementById('cdIlha').textContent = (c.ilha_nomes && c.ilha_nomes.length) ? c.ilha_nomes.join(', ') : '-';
+                    document.getElementById('cdData').textContent = fmtDate(c.data);
+                    document.getElementById('cdDataFim').textContent = fmtDate(c.data_fim);
+                    document.getElementById('cdStatus').textContent = statusLabels[c.status] || c.status || '-';
+                    document.getElementById('cdBase').textContent = c.base_apoio ? c.base_apoio.nome : 'Não informada';
+                    document.getElementById('cdEmbarcacao').textContent = c.embarcacao ? c.embarcacao.nome : 'Não informada';
+                    document.getElementById('cdEquipe').textContent = (c.equipe && c.equipe.length) ? c.equipe.map(m => m.nome_completo || m.nome).join(', ') : 'Não informada';
+                    document.getElementById('cdDesc').textContent = c.descricao || 'Sem descrição';
+                    const estacoes = c.estacoes || [];
+                    document.getElementById('cdEstacoes').textContent = estacoes.length
+                        ? estacoes.map(e => `${e.codigo || e.nome}${e.metodologia ? ' (' + e.metodologia + ')' : ''}`).join(', ')
+                        : 'Nenhuma';
                     _cdCtx.nome = c.nome || campanhaNome;
-                    _cdCtx.data = dataStr;
+                    _cdCtx.data = fmtDate(c.data);
                     _cdCtx.status = c.status || '';
                     _cdCtx.desc = c.descricao || '';
                 })
                 .catch(() => {});
-
-            // Set basic info we have (passed from caller)
-            document.getElementById('cdNome').textContent = campanhaNome;
-            document.getElementById('cdIlha').textContent = "ID: " + ilhaId; // Placeholder until we have name
 
             // Fetch Files
             fetch(`/api/campanhas/${campanhaId}/files?ilha_id=${ilhaId}`).then(r => r.json()).then(response => {
@@ -560,13 +575,42 @@
                 const data = await resp.json();
 
                 // Helper for Meteo JSON
-                const fmtMeteo = (m) => m ? `<span title="${JSON.stringify(m)}">☁️</span>` : '-';
+                const fmtMeteo = (m, explicitUrl = null) => {
+                    const meteoUrl = explicitUrl || (m && typeof m === 'object' ? m.imagem_meteo_url : null);
+                    if (!m && !meteoUrl) return '-';
+                    const title = m ? JSON.stringify(m) : 'Condicao do Sitio';
+                    return meteoUrl
+                        ? `<a href="${meteoUrl}" target="_blank" title="${title}">☁️</a>`
+                        : `<span title="${title}">☁️</span>`;
+                };
                 const fmtFile = (url, icon) => url ? `<a href="${url}" target="_blank">${icon}</a>` : '-';
+                const fmtBuscaFiles = (item) => {
+                    const links = [
+                        fmtFile(item.excel_url, '📊'),
+                        fmtFile(item.track_url, '🗺️')
+                    ].filter(link => link !== '-');
+                    return links.length ? links.join(' ') : '-';
+                };
                 const fmtVideo = (url) => {
                     if (!url) return '-';
                     return `<video src="${url}" controls style="max-width:220px; max-height:120px; border-radius:4px; background:#000;" preload="metadata">
                         <a href="${url}" target="_blank">🎥 Abrir vídeo</a>
                     </video>`;
+                };
+
+                const fmtVideoFiles = (item) => {
+                    const links = [
+                        fmtFile(item.track_url, 'Track'),
+                        fmtFile(item.transecto_kml_url, 'Transecto')
+                    ].filter(link => link !== '-');
+                    return links.length ? `<div style="margin-top:6px;">${links.join(' | ')}</div>` : '';
+                };
+                const fmtFotoFiles = (item) => {
+                    const links = [
+                        fmtFile(item.mosaico_url, 'Mosaico'),
+                        fmtFile(item.track_url, 'Percurso')
+                    ].filter(link => link !== '-');
+                    return links.length ? links.join(' | ') : '-';
                 };
 
                 const isAdmin = cdIsAdmin();
@@ -587,8 +631,8 @@
                         <td>${b.temp_ini || '-'} a ${b.temp_fim || '-'}</td>
                         <td>↕${b.vis_vert || '-'} ↔${b.vis_hor || '-'}</td>
                         <td>${b.encontrou_coralsol ? '<span style="color:red;font-weight:bold;">SIM</span>' : 'Não'}</td>
-                        <td style="text-align:center;">${fmtMeteo(b.dados_meteo)}</td>
-                        <td>${fmtFile(b.excel_url, '📊')} ${fmtFile(b.track_url, '🗺️')}</td>
+                        <td style="text-align:center;">${fmtMeteo(b.dados_meteo, b.meteo_url)}</td>
+                        <td>${fmtBuscaFiles(b)}</td>
                         ${adminTd}<button class="cd-action-btn del" onclick="cdDeleteRecord('busca',${b.id},this.closest('tr'))">🗑</button></td>`;
                     buscaBody.appendChild(tr);
                 });
@@ -608,7 +652,7 @@
                         <td>${v.riqueza || '-'}</td>
                         <td>${v.shannon || '-'}</td>
                         <td>${v.jaccard || '-'}</td>
-                        <td style="text-align:center;">${fmtMeteo(v.dados_meteo)}</td>
+                        <td style="text-align:center;">${fmtMeteo(v.dados_meteo, v.meteo_url)}</td>
                         <td style="text-align:center;">${fmtVideo(v.video_url)}</td>
                         ${adminTd}<button class="cd-action-btn del" onclick="cdDeleteRecord('video',${v.id},this.closest('tr'))">🗑</button></td>`;
                     videoBody.appendChild(tr);
@@ -628,11 +672,50 @@
                         <td>↕${f.vis_vert || '-'} ↔${f.vis_hor || '-'}</td>
                         <td>${f.riqueza || '-'}</td>
                         <td>${f.shannon || '-'}</td>
-                        <td style="text-align:center;">${fmtMeteo(f.dados_meteo)}</td>
+                        <td style="text-align:center;">${fmtMeteo(f.dados_meteo, f.meteo_url)}</td>
                         <td style="text-align:center;">${fmtFile(f.mosaico_url, '🖼️')}</td>
                         ${adminTd}<button class="cd-action-btn del" onclick="cdDeleteRecord('foto',${f.id},this.closest('tr'))">🗑</button></td>`;
                     fotoBody.appendChild(tr);
                 });
+
+                if (data.videos.length > 0) {
+                    videoBody.innerHTML = '';
+                    data.videos.forEach(v => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${v.estacao}</td>
+                            <td>${v.hora || '-'}</td>
+                            <td>${v.prof_ini || '-'} a ${v.prof_fim || '-'}</td>
+                            <td>${v.temp_ini || '-'} a ${v.temp_fim || '-'}</td>
+                            <td>↕${v.vis_vert || '-'} ↔${v.vis_hor || '-'}</td>
+                            <td>${v.riqueza || '-'}</td>
+                            <td>${v.shannon || '-'}</td>
+                            <td>${v.jaccard || '-'}</td>
+                            <td style="text-align:center;">${fmtMeteo(v.dados_meteo, v.meteo_url)}</td>
+                            <td style="text-align:center;">${fmtVideo(v.video_url)}${fmtVideoFiles(v)}</td>
+                            ${adminTd}<button class="cd-action-btn del" onclick="cdDeleteRecord('video',${v.id},this.closest('tr'))">🗑</button></td>`;
+                        videoBody.appendChild(tr);
+                    });
+                }
+
+                if (data.fotos.length > 0) {
+                    fotoBody.innerHTML = '';
+                    data.fotos.forEach(f => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${f.estacao}</td>
+                            <td>${f.hora || '-'}</td>
+                            <td>${f.profundidade || '-'}</td>
+                            <td>${f.temperatura || '-'}</td>
+                            <td>↕${f.vis_vert || '-'} ↔${f.vis_hor || '-'}</td>
+                            <td>${f.riqueza || '-'}</td>
+                            <td>${f.shannon || '-'}</td>
+                            <td style="text-align:center;">${fmtMeteo(f.dados_meteo, f.meteo_url)}</td>
+                            <td style="text-align:center;">${fmtFotoFiles(f)}</td>
+                            ${adminTd}<button class="cd-action-btn del" onclick="cdDeleteRecord('foto',${f.id},this.closest('tr'))">🗑</button></td>`;
+                        fotoBody.appendChild(tr);
+                    });
+                }
 
             } else {
                 console.error("Failed to load full details");
